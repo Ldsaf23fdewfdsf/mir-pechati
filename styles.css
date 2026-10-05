@@ -864,17 +864,15 @@ details p:last-child { padding-bottom: 24px; }
 }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* ---------- Цена «сводится» по цветам, как при печати ---------- */
-.price__value { transition: text-shadow .9s var(--ease-out); }
-.register-ready [data-register]:not(.is-registered) {
-  text-shadow: -9px -3px 0 var(--c), 9px 3px 0 var(--m), 2px 8px 0 var(--y);
+/* ---------- Привязка к прокрутке (класс ставит script.js) ---------- */
+.scroll-progress { position: fixed; left: 0; right: 0; top: 0; z-index: 80; height: 3px; pointer-events: none; }
+.scroll-progress i {
+  display: block; height: 100%; clip-path: inset(0 100% 0 0);
+  background: linear-gradient(90deg, var(--c) 0 25%, var(--m) 25% 50%, var(--y) 50% 75%, var(--k) 75%);
 }
-[data-register].is-registered {
-  text-shadow: 0 0 0 transparent, 0 0 0 transparent, 0 0 0 transparent;
-}
-@media (prefers-reduced-motion: reduce) {
-  .register-ready [data-register]:not(.is-registered) { text-shadow: none; }
-}
+/* бегущая строка и печать гарантии двигаются от прокрутки, а не сами */
+.scroll-linked .ticker__track,
+.scroll-linked .guarantee__seal svg { animation: none; }
 
 /* ---------- Шапка уплотняется при прокрутке ---------- */
 .header__bar { transition: background-color .25s ease, box-shadow .25s ease, border-color .25s ease; }

@@ -345,25 +345,8 @@ document.querySelectorAll('.compare').forEach((box) => {
   range?.addEventListener('input', () => { touch(); setPos(Number(range.value)); });
   setPos(Number(range?.value ?? 50));
 
-  // Подсказка: один раз «качнуть» шторку, когда блок появится на экране
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce || !('IntersectionObserver' in window)) return;
-  const io = new IntersectionObserver((entries) => {
-    if (!entries.some((en) => en.isIntersecting)) return;
-    io.disconnect();
-    const t0 = performance.now() + 400;
-    const dur = 1600;
-    const step = (now) => {
-      if (touched) return;
-      const t = (now - t0) / dur;
-      if (t < 0) { requestAnimationFrame(step); return; }
-      if (t >= 1) { setPos(50); return; }
-      setPos(50 + Math.sin(t * Math.PI * 2) * 22 * (1 - t * 0.4));
-      requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, { threshold: 0.6 });
-  io.observe(box);
+  // Пока шторку не трогали руками, ею управляет прокрутка (см. scrollScenes)
+  box.scrollDrive = (v) => { if (!touched && !dragging) setPos(v); };
 });
 
 /* ---------- Появление списков: короткая лесенка ---------- */
@@ -393,21 +376,6 @@ document.querySelectorAll('.compare').forEach((box) => {
   items.forEach((el) => io.observe(el));
 })();
 
-/* ---------- Цена «сводится» по цветам, когда появляется на экране ---------- */
-(function registerPrice() {
-  const els = document.querySelectorAll('[data-register]');
-  if (!els.length || REDUCED_MOTION || !('IntersectionObserver' in window)) return;
-  document.documentElement.classList.add('register-ready');
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((e) => {
-      if (!e.isIntersecting) return;
-      setTimeout(() => e.target.classList.add('is-registered'), 150);
-      io.unobserve(e.target);
-    });
-  }, { threshold: 0.6 });
-  els.forEach((el) => io.observe(el));
-})();
-
 /* ---------- Шапка уплотняется при прокрутке ---------- */
 (function headerState() {
   const header = document.querySelector('.header');
@@ -415,6 +383,98 @@ document.querySelectorAll('.compare').forEach((box) => {
   const update = () => header.classList.toggle('is-scrolled', window.scrollY > 12);
   window.addEventListener('scroll', update, { passive: true });
   update();
+})();
+
+/* ---------- Сцены, привязанные к прокрутке ----------
+   Один обработчик scroll + requestAnimationFrame на всё.
+   Двигаем только translate / rotate / text-shadow / clip-path — без пересчёта раскладки.
+   При «уменьшить движение» остаётся только полоска прогресса. */
+(function scrollScenes() {
+  const root = document.documentElement;
+  const bar = document.querySelector('.scroll-progress i');
+  const hero = document.querySelector('.hero');
+  const sheet = document.querySelector('.sheet');
+  const stamp = document.querySelector('.stamp');
+  const award = document.querySelector('.award');
+  const ticker = document.querySelector('.ticker__track');
+  const seal = document.querySelector('.guarantee__seal svg');
+  const price = document.querySelector('[data-register]');
+  const compares = [...document.querySelectorAll('.compare')];
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const near = (el, vh) => {
+    const r = el.getBoundingClientRect();
+    return r.bottom > -200 && r.top < vh + 200 ? r : null;
+  };
+
+  if (!REDUCED_MOTION) root.classList.add('scroll-linked');
+  let tickerHalf = 0;
+  const measure = () => { tickerHalf = ticker ? ticker.scrollWidth / 2 : 0; };
+  measure();
+
+  let queued = false;
+  function frame() {
+    queued = false;
+    const y = window.scrollY;
+    const vh = window.innerHeight;
+    const max = root.scrollHeight - vh;
+
+    // полоска «прогресса печати»
+    if (bar) bar.style.clipPath = `inset(0 ${100 - clamp(max > 0 ? y / max : 0) * 100}% 0 0)`;
+    if (REDUCED_MOTION) return;
+
+    // первый экран: лист выпрямляется и уходит вверх, печать и награда — со своей скоростью.
+    // Только когда лист стоит рядом с текстом: на узком экране он под текстом и наехал бы на него.
+    if (hero && sheet && window.innerWidth > 900) {
+      const p = clamp(y / hero.offsetHeight);
+      sheet.style.translate = `0 ${(-p * 70).toFixed(1)}px`;
+      sheet.style.rotate = `${(p * 3).toFixed(2)}deg`;
+      if (stamp) {
+        stamp.style.translate = `0 ${(-p * 150).toFixed(1)}px`;
+        stamp.style.rotate = `${(p * 25).toFixed(1)}deg`;
+      }
+      if (award) award.style.translate = `${(-p * 40).toFixed(1)}px ${(-p * 30).toFixed(1)}px`;
+    }
+
+    // бегущая строка идёт в темпе прокрутки
+    if (ticker && tickerHalf && near(ticker, vh)) {
+      ticker.style.translate = `${(-((y * 0.45) % tickerHalf)).toFixed(1)}px 0`;
+    }
+
+    // печать гарантии проворачивается при прокрутке
+    if (seal && near(seal, vh)) seal.style.rotate = `${(y * 0.12).toFixed(1)}deg`;
+
+    // цена сводится из смещённых CMYK-слоёв по мере подхода к ней
+    if (price) {
+      const r = near(price, vh);
+      if (r) {
+        const f = 1 - clamp((vh * 0.95 - r.top) / (vh * 0.45));
+        price.style.textShadow = f < 0.01 ? 'none'
+          : `${(-9 * f).toFixed(1)}px ${(-3 * f).toFixed(1)}px 0 var(--c), ${(9 * f).toFixed(1)}px ${(3 * f).toFixed(1)}px 0 var(--m), ${(2 * f).toFixed(1)}px ${(8 * f).toFixed(1)}px 0 var(--y)`;
+      }
+    }
+
+    // шторка «до/после»: «после» наезжает на «до» по мере прокрутки
+    compares.forEach((box) => {
+      const r = near(box, vh);
+      if (!r || !box.scrollDrive) return;
+      const t = clamp((vh * 0.9 - r.top) / (vh * 0.9 - vh * 0.15));
+      box.scrollDrive(88 - t * 76);
+    });
+  }
+
+  const request = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(frame);
+  };
+  window.addEventListener('scroll', request, { passive: true });
+  window.addEventListener('resize', () => {
+    measure();
+    if (window.innerWidth <= 900) [sheet, stamp, award].forEach((el) => { if (el) { el.style.translate = ''; el.style.rotate = ''; } });
+    request();
+  });
+  window.addEventListener('load', () => { measure(); request(); });
+  frame();
 })();
 
 /* ---------- Мобильная панель: прячется, пока видны кнопки первого экрана ---------- */
