@@ -383,12 +383,26 @@ ul, ol { list-style: none; }
 .section--tight { padding-top: clamp(24px, 4vw, 48px); }
 .ba { display: grid; grid-template-columns: 1fr minmax(0, 460px); gap: clamp(32px, 6vw, 96px); align-items: center; }
 .ba__copy .lead { margin-top: 22px; }
-.ba__list { margin-top: 28px; display: grid; gap: 12px; }
-.ba__list li { position: relative; padding-left: 28px; color: var(--ink-2); }
-.ba__list li::before { content: ""; position: absolute; left: 0; top: .55em; width: 14px; height: 14px; border-radius: 50%; background: var(--c); }
-.ba__list li:nth-child(2)::before { background: var(--m); }
-.ba__list li:nth-child(3)::before { background: var(--y); }
-.ba__list li:nth-child(4)::before { background: var(--k); }
+/* Точки одного цвета, соединённые линией. Линия «дотягивается» при прокрутке (script.js → scrollScenes);
+   без JS и при «уменьшить движение» всё сразу собрано. */
+.ba__list { position: relative; margin-top: 28px; display: grid; gap: 18px; --p: 1; }
+.ba__list::before,
+.ba__list::after {
+  content: ""; position: absolute; left: 6px; width: 2px; border-radius: 2px;
+  top: var(--line-top, 0); height: var(--line-h, 0);
+}
+.ba__list::before { background: color-mix(in srgb, var(--m) 16%, transparent); }
+.ba__list::after { background: var(--m); transform-origin: 50% 0; transform: scaleY(var(--p)); transition: transform .12s linear; }
+.ba__list li { position: relative; padding-left: 34px; color: var(--ink-2); }
+.ba__list li::before {
+  content: ""; position: absolute; z-index: 1; left: 0; top: .5em;
+  width: 14px; height: 14px; border-radius: 50%; box-sizing: border-box;
+  border: 2px solid var(--m); background: var(--m);
+  transition: background-color .3s ease, transform .4s var(--ease-out);
+}
+.scroll-linked .ba__list li:not(.is-lit)::before { background: var(--paper); transform: scale(.86); }
+.ba__list li { transition: color .3s ease; }
+.scroll-linked .ba__list li:not(.is-lit) { color: var(--ink-3); }
 
 .compare {
   position: relative; aspect-ratio: 2 / 3; border-radius: var(--radius); overflow: hidden;

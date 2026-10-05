@@ -399,6 +399,7 @@ document.querySelectorAll('.compare').forEach((box) => {
   const seal = document.querySelector('.guarantee__seal svg');
   const price = document.querySelector('[data-register]');
   const compares = [...document.querySelectorAll('.compare')];
+  const connects = [...document.querySelectorAll('[data-connect]')];
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const near = (el, vh) => {
     const r = el.getBoundingClientRect();
@@ -406,6 +407,22 @@ document.querySelectorAll('.compare').forEach((box) => {
   };
 
   if (!REDUCED_MOTION) root.classList.add('scroll-linked');
+
+  // Списки с соединёнными точками: меряем центры точек относительно списка
+  const measureConnects = () => connects.forEach((list) => {
+    const items = [...list.children];
+    if (!items.length) return;
+    const top = list.getBoundingClientRect().top;
+    list.dots = items.map((li) => {
+      const cs = getComputedStyle(li, '::before');
+      return li.getBoundingClientRect().top - top + parseFloat(cs.top) + parseFloat(cs.height) / 2;
+    });
+    const first = list.dots[0];
+    const last = list.dots[list.dots.length - 1];
+    list.style.setProperty('--line-top', `${first}px`);
+    list.style.setProperty('--line-h', `${last - first}px`);
+  });
+  measureConnects();
 
   let queued = false;
   function frame() {
@@ -444,6 +461,17 @@ document.querySelectorAll('.compare').forEach((box) => {
       }
     }
 
+    // точки соединяются линией по мере прокрутки: линия дотягивается до точки — точка загорается
+    connects.forEach((list) => {
+      const r = list.dots && near(list, vh);
+      if (!r) return;
+      const target = vh * 0.72;
+      const a = r.top + list.dots[0];
+      const b = r.top + list.dots[list.dots.length - 1];
+      list.style.setProperty('--p', clamp((target - a) / Math.max(1, b - a)).toFixed(3));
+      [...list.children].forEach((li, i) => li.classList.toggle('is-lit', r.top + list.dots[i] <= target + 1));
+    });
+
     // шторка «до/после»: «после» наезжает на «до» по мере прокрутки
     compares.forEach((box) => {
       const r = near(box, vh);
@@ -460,10 +488,12 @@ document.querySelectorAll('.compare').forEach((box) => {
   };
   window.addEventListener('scroll', request, { passive: true });
   window.addEventListener('resize', () => {
+    measureConnects();
     if (window.innerWidth <= 900) [sheet, stamp, award].forEach((el) => { if (el) { el.style.translate = ''; el.style.rotate = ''; } });
     request();
   });
-  window.addEventListener('load', request);
+  window.addEventListener('load', () => { measureConnects(); request(); });
+  if (document.fonts) document.fonts.ready.then(() => { measureConnects(); request(); });
   frame();
 })();
 
