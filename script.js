@@ -51,14 +51,14 @@ if (burger && nav) {
   const [from, to] = HOURS[day];
   let text, cls;
   if (now >= from && now < to) {
-    text = `Открыто до ${to}:00`;
+    text = `Сейчас открыто · Работаем до ${to}:00 по МСК`;
     cls = 'is-open';
   } else if (now < from) {
-    text = `Закрыто · откроемся в ${from}:00`;
+    text = `Сейчас закрыто · Работаем сегодня с ${from}:00 по МСК`;
     cls = 'is-closed';
   } else {
     const next = HOURS[(day + 1) % 7][0];
-    text = `Закрыто · завтра с ${next}:00`;
+    text = `Сегодня закрыто · Работаем завтра с ${next}:00 по МСК`;
     cls = 'is-closed';
   }
   nodes.forEach((n) => { n.textContent = text; n.classList.add(cls); });
