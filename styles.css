@@ -785,6 +785,41 @@ details p:last-child { padding-bottom: 24px; }
    Всё остальное — тихая обратная связь.
    ========================================================= */
 
+/* ---------- Вступление: диафрагма фотоаппарата ----------
+   Оверлей создаёт встроенный скрипт в начале <body>, один раз за сеанс.
+   Подстраховка: если скрипт оборвётся, оверлей сам исчезнет через 4 с. */
+.iris {
+  position: fixed; inset: 0; z-index: 9999; cursor: pointer;
+  animation: iris-failsafe .4s ease 4s forwards;
+}
+.iris svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.iris .b1, .iris .b2 { stroke: #2c2d35; stroke-width: .45; stroke-linejoin: round; }
+.iris .b1 { fill: url(#iris-metal-a); }
+.iris .b2 { fill: url(#iris-metal-b); }
+.iris__logo {
+  position: absolute; left: 50%; top: 50%;
+  display: flex; align-items: center; gap: 12px; white-space: nowrap;
+  color: #fff; font: 800 clamp(18px, 2.4vw, 26px)/1 var(--f-display); letter-spacing: -0.01em; text-transform: uppercase;
+  transform: translate(-50%, -50%);
+  animation: iris-logo .45s var(--ease-out) both;
+}
+.iris__logo b { font-weight: 500; text-transform: none; }
+.iris__logo .logo__dots i:nth-child(4) { background: #fff; }
+.iris.is-opening .iris__logo { animation: iris-logo-out .3s ease-in forwards; }
+.iris__flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.iris.is-flash .iris__flash { animation: iris-flash .5s ease-out both; }
+.iris.is-done { opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility 0s linear .25s; }
+@keyframes iris-logo {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(1.08); filter: blur(8px); }
+  to   { opacity: 1; transform: translate(-50%, -50%); filter: none; }
+}
+@keyframes iris-logo-out {
+  from { opacity: 1; transform: translate(-50%, -50%); filter: none; }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(.82); filter: blur(4px); }
+}
+@keyframes iris-flash { 0% { opacity: .5; } 100% { opacity: 0; } }
+@keyframes iris-failsafe { to { opacity: 0; visibility: hidden; } }
+
 /* ---------- Списки: короткая лесенка, только у настоящих списков ----------
    Прячем элементы только когда script.js загрузился (класс reveal-ready),
    иначе контент виден сразу. */
@@ -798,19 +833,19 @@ details p:last-child { padding-bottom: 24px; }
 
 /* ---------- Первый экран: лист выходит из принтера ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .js .sheet { animation: sheet-feed .9s var(--ease-out) .1s both; }
+  .js .sheet { animation: sheet-feed .9s var(--ease-out) calc(var(--intro, 0s) + .1s) both; }
   @keyframes sheet-feed {
     from { clip-path: inset(0 0 100% 0); transform: rotate(-3deg) translateY(-26px); }
     to   { clip-path: inset(-80px -80px -140px -80px); transform: rotate(-3deg) translateY(0); }
   }
 
   /* каждый кадр печатается сверху вниз под «печатающей головкой» */
-  .js .photo img { animation: print-in .6s cubic-bezier(.45, 0, .2, 1) both; animation-delay: calc(.55s + var(--n) * .14s); }
+  .js .photo img { animation: print-in .6s cubic-bezier(.45, 0, .2, 1) both; animation-delay: calc(var(--intro, 0s) + .55s + var(--n) * .14s); }
   .js .photo::after {
     content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
     background: linear-gradient(90deg, var(--c), var(--m), var(--y)) left bottom / 100% 3px no-repeat;
     opacity: 0;
-    animation: print-head .6s cubic-bezier(.45, 0, .2, 1) both; animation-delay: calc(.55s + var(--n) * .14s);
+    animation: print-head .6s cubic-bezier(.45, 0, .2, 1) both; animation-delay: calc(var(--intro, 0s) + .55s + var(--n) * .14s);
   }
   .photo:nth-child(1) { --n: 0; } .photo:nth-child(2) { --n: 1; }
   .photo:nth-child(3) { --n: 2; } .photo:nth-child(4) { --n: 3; }
@@ -822,17 +857,17 @@ details p:last-child { padding-bottom: 24px; }
   }
 
   /* метки обреза и шкала CMYK */
-  .js .crop { animation: crop-in .45s var(--ease-out) 1.15s both; }
+  .js .crop { animation: crop-in .45s var(--ease-out) calc(var(--intro, 0s) + 1.15s) both; }
   @keyframes crop-in { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
   .js .colorbar i { animation: ink-in .3s var(--ease-out) both; }
-  .js .colorbar i:nth-child(1) { animation-delay: 1.2s; }
-  .js .colorbar i:nth-child(2) { animation-delay: 1.26s; }
-  .js .colorbar i:nth-child(3) { animation-delay: 1.32s; }
-  .js .colorbar i:nth-child(4) { animation-delay: 1.38s; }
+  .js .colorbar i:nth-child(1) { animation-delay: calc(var(--intro, 0s) + 1.2s); }
+  .js .colorbar i:nth-child(2) { animation-delay: calc(var(--intro, 0s) + 1.26s); }
+  .js .colorbar i:nth-child(3) { animation-delay: calc(var(--intro, 0s) + 1.32s); }
+  .js .colorbar i:nth-child(4) { animation-delay: calc(var(--intro, 0s) + 1.38s); }
   @keyframes ink-in { from { opacity: 0; transform: scaleY(0); } to { opacity: 1; transform: none; } }
 
   /* печать «800 ₽» ставится с ударом */
-  .js .stamp { animation: stamp-hit .55s var(--ease-out) 1.45s both; }
+  .js .stamp { animation: stamp-hit .55s var(--ease-out) calc(var(--intro, 0s) + 1.45s) both; }
   @keyframes stamp-hit {
     0%   { opacity: 0; transform: rotate(4deg) scale(1.7); }
     55%  { opacity: 1; transform: rotate(10deg) scale(.95); }
@@ -841,19 +876,19 @@ details p:last-child { padding-bottom: 24px; }
   .js .stamp::after {
     content: ""; position: absolute; inset: 0; border-radius: 50%;
     border: 2px solid var(--m); opacity: 0;
-    animation: ink-ring .7s var(--ease-out) 1.75s backwards;
+    animation: ink-ring .7s var(--ease-out) calc(var(--intro, 0s) + 1.75s) backwards;
   }
   @keyframes ink-ring { from { opacity: .7; transform: scale(1); } to { opacity: 0; transform: scale(1.45); } }
 
   /* награда въезжает из-за листа */
-  .js .award { animation: award-in .6s var(--ease-out) 1.75s both; }
+  .js .award { animation: award-in .6s var(--ease-out) calc(var(--intro, 0s) + 1.75s) both; }
   @keyframes award-in {
     from { opacity: 0; transform: rotate(-3deg) translateX(-28px); clip-path: inset(0 100% 0 0 round 20px); }
     to   { opacity: 1; transform: rotate(-3deg); clip-path: inset(0 0 0 0 round 20px); }
   }
 
   /* маркер протягивается под «на документы» */
-  .js .hl { background-repeat: no-repeat; background-size: 0% 100%; animation: marker .7s var(--ease-out) .45s forwards; }
+  .js .hl { background-repeat: no-repeat; background-size: 0% 100%; animation: marker .7s var(--ease-out) calc(var(--intro, 0s) + .45s) forwards; }
   @keyframes marker { to { background-size: 100% 100%; } }
 }
 
