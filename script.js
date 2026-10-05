@@ -129,13 +129,61 @@ if (burger && nav) {
   }
 })();
 
-/* ---------- Шторка «до / после» ---------- */
+/* ---------- Шторка «до / после» ----------
+   Тянуть можно за любое место фото (мышь, палец, стилус).
+   Невидимый range оставлен для клавиатуры и экранных дикторов. */
 document.querySelectorAll('.compare').forEach((box) => {
   const range = box.querySelector('.compare__range');
-  if (!range) return;
-  const set = () => box.style.setProperty('--pos', `${range.value}%`);
-  range.addEventListener('input', set);
-  set();
+  let dragging = false;
+  let touched = false;
+
+  const setPos = (v) => {
+    const pos = Math.max(0, Math.min(100, v));
+    box.style.setProperty('--pos', `${pos}%`);
+    if (range) range.value = String(Math.round(pos));
+  };
+  const touch = () => { touched = true; box.classList.add('is-touched'); };
+  const fromPointer = (e) => {
+    const r = box.getBoundingClientRect();
+    return ((e.clientX - r.left) / r.width) * 100;
+  };
+
+  box.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true;
+    touch();
+    box.classList.add('is-dragging');
+    box.setPointerCapture?.(e.pointerId);
+    setPos(fromPointer(e));
+  });
+  box.addEventListener('pointermove', (e) => { if (dragging) setPos(fromPointer(e)); });
+  const stop = () => { dragging = false; box.classList.remove('is-dragging'); };
+  box.addEventListener('pointerup', stop);
+  box.addEventListener('pointercancel', stop);
+  box.addEventListener('lostpointercapture', stop);
+
+  range?.addEventListener('input', () => { touch(); setPos(Number(range.value)); });
+  setPos(Number(range?.value ?? 50));
+
+  // Подсказка: один раз «качнуть» шторку, когда блок появится на экране
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    if (!entries.some((en) => en.isIntersecting)) return;
+    io.disconnect();
+    const t0 = performance.now() + 400;
+    const dur = 1600;
+    const step = (now) => {
+      if (touched) return;
+      const t = (now - t0) / dur;
+      if (t < 0) { requestAnimationFrame(step); return; }
+      if (t >= 1) { setPos(50); return; }
+      setPos(50 + Math.sin(t * Math.PI * 2) * 22 * (1 - t * 0.4));
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, { threshold: 0.6 });
+  io.observe(box);
 });
 
 /* ---------- Появление блоков ---------- */

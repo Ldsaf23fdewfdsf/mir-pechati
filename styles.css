@@ -385,31 +385,52 @@ ul, ol { list-style: none; }
 .compare {
   position: relative; aspect-ratio: 2 / 3; border-radius: var(--radius); overflow: hidden;
   background: #fff; box-shadow: var(--shadow), 0 40px 80px -40px rgb(17 18 22 / .35);
-  user-select: none; -webkit-user-select: none; touch-action: pan-y;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  touch-action: pan-y; cursor: ew-resize;
 }
-.compare__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.compare.is-dragging { cursor: grabbing; }
+.compare__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
 .compare__img--after { clip-path: inset(0 0 0 var(--pos)); }
 .compare__tag {
   position: absolute; top: 16px; z-index: 2; padding: 8px 14px; border-radius: 999px;
   font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
-  background: rgb(17 18 22 / .78); color: #fff; backdrop-filter: blur(6px);
+  background: rgb(17 18 22 / .78); color: #fff; backdrop-filter: blur(6px); pointer-events: none;
 }
 .compare__tag--before { left: 16px; }
 .compare__tag--after { right: 16px; background: var(--m); }
 .compare__handle {
-  position: absolute; top: 0; bottom: 0; left: var(--pos); z-index: 2; width: 3px; margin-left: -1.5px;
-  background: #fff; box-shadow: 0 0 0 1px rgb(17 18 22 / .12); pointer-events: none;
+  position: absolute; top: 0; bottom: 0; left: var(--pos); z-index: 2; width: 4px; margin-left: -2px;
+  background: #fff; box-shadow: 0 0 0 1px rgb(17 18 22 / .12), 0 0 18px rgb(17 18 22 / .25); pointer-events: none;
 }
+/* кружок-ручка */
 .compare__handle::after {
-  content: ""; position: absolute; top: 50%; left: 50%; width: 52px; height: 52px; transform: translate(-50%, -50%);
-  border-radius: 50%; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111216' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l-6 6 6 6M15 6l6 6-6 6'/%3E%3C/svg%3E") center / 24px no-repeat;
-  box-shadow: 0 8px 20px -6px rgb(17 18 22 / .45);
+  content: ""; position: absolute; top: 50%; left: 50%; width: 64px; height: 64px; transform: translate(-50%, -50%);
+  border-radius: 50%; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e5007d' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l-6 6 6 6M15 6l6 6-6 6'/%3E%3C/svg%3E") center / 28px no-repeat;
+  box-shadow: 0 10px 24px -8px rgb(17 18 22 / .5), 0 0 0 4px rgb(255 255 255 / .55);
+  transition: transform .2s ease;
 }
+.compare.is-dragging .compare__handle::after { transform: translate(-50%, -50%) scale(1.08); }
+/* пульсирующее кольцо, пока шторку не трогали */
+.compare__handle::before {
+  content: ""; position: absolute; top: 50%; left: 50%; width: 64px; height: 64px; transform: translate(-50%, -50%);
+  border-radius: 50%; border: 2px solid #fff; animation: pulse 1.8s ease-out infinite;
+}
+.compare.is-touched .compare__handle::before { animation: none; opacity: 0; }
+@keyframes pulse { from { transform: translate(-50%, -50%) scale(1); opacity: .9; } to { transform: translate(-50%, -50%) scale(1.9); opacity: 0; } }
+.compare__hint {
+  position: absolute; top: calc(50% + 46px); left: 50%; transform: translateX(-50%);
+  padding: 7px 12px; border-radius: 999px; white-space: nowrap;
+  background: var(--ink); color: #fff; font-size: 13px; font-weight: 800;
+  transition: opacity .3s ease;
+}
+.compare.is-touched .compare__hint { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .compare__handle::before { animation: none; } }
+/* ползунок только для клавиатуры и экранных дикторов */
 .compare__range {
-  position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; margin: 0;
-  opacity: 0; cursor: ew-resize; -webkit-appearance: none; appearance: none;
+  position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; margin: 0;
+  opacity: 0; pointer-events: none; -webkit-appearance: none; appearance: none;
 }
-.compare:has(.compare__range:focus-visible) .compare__handle::after { outline: 3px solid var(--c); outline-offset: 2px; }
+.compare:has(.compare__range:focus-visible) .compare__handle::after { outline: 3px solid var(--c); outline-offset: 3px; }
 
 /* ---------- Гарантия ---------- */
 .guarantee-wrap { padding: 0 0 clamp(72px, 10vw, 136px); }
