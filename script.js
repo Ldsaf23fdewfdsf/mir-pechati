@@ -21,6 +21,10 @@ const HOURS = {
 };
 
 document.documentElement.classList.remove('no-js');
+document.documentElement.classList.add('js');
+
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE_OUT = 'cubic-bezier(.16, 1, .3, 1)';
 
 /* ---------- Бургер ---------- */
 const burger = document.querySelector('.burger');
@@ -234,7 +238,7 @@ function reviewCarousel(root, all, tags) {
     b.addEventListener('click', () => {
       active = active === t ? null : t;
       chips.forEach((c) => c.setAttribute('aria-pressed', String(c === b && active === t)));
-      render();
+      render(true);
     });
     chipsBox.append(b);
     return b;
@@ -275,12 +279,21 @@ function reviewCarousel(root, all, tags) {
       c.querySelector('.rv-card__more').hidden = c.classList.contains('is-open') ? false : t.scrollHeight <= t.clientHeight + 2;
     });
   };
-  function render() {
+  function render(animate = false) {
     track.textContent = '';
     (active ? all.filter((r) => active.match.test(r.text)) : all).forEach((r) => track.append(card(r)));
     track.scrollLeft = 0;
     markLong();
     renderDots();
+    if (!animate || !Element.prototype.animate) return;
+    [...track.children].forEach((c, i) => {
+      c.animate(
+        REDUCED_MOTION
+          ? [{ opacity: 0 }, { opacity: 1 }]
+          : [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }],
+        { duration: REDUCED_MOTION ? 200 : 420, delay: Math.min(i, 3) * 60, easing: EASE_OUT, fill: 'backwards' },
+      );
+    });
   }
 
   prev.addEventListener('click', () => track.scrollBy({ left: -pageStep(), behavior: 'smooth' }));
@@ -353,18 +366,75 @@ document.querySelectorAll('.compare').forEach((box) => {
   io.observe(box);
 });
 
-/* ---------- Появление блоков ---------- */
+/* ---------- Появление списков: короткая лесенка ---------- */
 (function reveal() {
-  const items = document.querySelectorAll('.reveal');
-  if (!('IntersectionObserver' in window)) { items.forEach((el) => el.classList.add('is-in')); return; }
+  const items = [...document.querySelectorAll('.reveal')];
+  if (!items.length || !('IntersectionObserver' in window)) return;
+
+  // задержка по порядку внутри своего списка, не больше 5 шагов
+  const order = new Map();
+  items.forEach((el) => {
+    const i = order.get(el.parentElement) || 0;
+    order.set(el.parentElement, i + 1);
+    el.style.setProperty('--d', `${Math.min(i, 5) * 70}ms`);
+  });
+
+  document.documentElement.classList.add('reveal-ready');
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       if (!e.isIntersecting) return;
-      e.target.classList.add('is-in');
+      const el = e.target;
+      el.classList.add('is-in');
+      io.unobserve(el);
+      // после появления убираем задержку, чтобы ховер срабатывал сразу
+      setTimeout(() => el.style.removeProperty('--d'), 1000);
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  items.forEach((el) => io.observe(el));
+})();
+
+/* ---------- Цена «сводится» по цветам, когда появляется на экране ---------- */
+(function registerPrice() {
+  const els = document.querySelectorAll('[data-register]');
+  if (!els.length || REDUCED_MOTION || !('IntersectionObserver' in window)) return;
+  document.documentElement.classList.add('register-ready');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      setTimeout(() => e.target.classList.add('is-registered'), 150);
       io.unobserve(e.target);
     });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-  items.forEach((el) => io.observe(el));
+  }, { threshold: 0.6 });
+  els.forEach((el) => io.observe(el));
+})();
+
+/* ---------- Шапка уплотняется при прокрутке ---------- */
+(function headerState() {
+  const header = document.querySelector('.header');
+  if (!header) return;
+  const update = () => header.classList.toggle('is-scrolled', window.scrollY > 12);
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+
+/* ---------- Мобильная панель: прячется, пока видны кнопки первого экрана ---------- */
+(function dockState() {
+  const dock = document.querySelector('.dock');
+  const heroCta = document.querySelector('.hero__cta');
+  if (!dock || !heroCta || !('IntersectionObserver' in window)) return;
+  new IntersectionObserver(([e]) => {
+    dock.classList.toggle('is-tucked', e.isIntersecting);
+  }).observe(heroCta);
+})();
+
+/* ---------- Бесконечные циклы стоят, когда их не видно ---------- */
+(function pauseOffscreen() {
+  const loops = document.querySelectorAll('.ticker-wrap, .guarantee__seal');
+  if (!loops.length || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => e.target.classList.toggle('is-offscreen', !e.isIntersecting));
+  });
+  loops.forEach((el) => io.observe(el));
 })();
 
 /* ---------- Меню «Оставить отзыв»: закрывать по клику мимо и Esc ---------- */

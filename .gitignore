@@ -1,3 +1,5 @@
 .claude/
 PROMPT-site.md
 .DS_Store
+example/
+index-example.html
