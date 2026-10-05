@@ -68,10 +68,12 @@ if (burger && nav) {
 (function reviews() {
   const tabsBox = document.getElementById('reviews-tabs');
   const unified = document.getElementById('myreviews');
+  const rv = document.getElementById('rv');
 
   // Вариант 1: единый виджет MyReviews
   if (MYREVIEWS.uuid && unified && tabsBox) {
     tabsBox.hidden = true;
+    if (rv) rv.hidden = true;
     unified.hidden = false;
     const s = document.createElement('script');
     s.src = 'https://myreviews.dev/widget/dist/index.js';
@@ -86,14 +88,23 @@ if (burger && nav) {
         // виджет не поднялся — возвращаем вкладки
         unified.hidden = true;
         tabsBox.hidden = false;
+        if (rv) rv.hidden = false;
       }
     };
-    s.onerror = () => { unified.hidden = true; tabsBox.hidden = false; };
+    s.onerror = () => { unified.hidden = true; tabsBox.hidden = false; if (rv) rv.hidden = false; };
     document.body.appendChild(s);
     return;
   }
 
-  // Вариант 2: вкладки Яндекс / 2ГИС
+  // Вариант 2: своя карусель из reviews.js
+  const list = Array.isArray(window.REVIEWS) ? window.REVIEWS.filter((r) => r && r.text) : [];
+  if (rv && list.length) {
+    reviewCarousel(rv, list, window.REVIEW_TAGS || []);
+    if (tabsBox) tabsBox.hidden = true;
+    return;
+  }
+
+  // Вариант 3: вкладки Яндекс / 2ГИС
   if (!tabsBox) return;
   const tabs = [...tabsBox.querySelectorAll('[role="tab"]')];
   const select = (tab) => {
@@ -128,6 +139,151 @@ if (burger && nav) {
     }
   }
 })();
+
+/* ---------- Карусель отзывов ---------- */
+function reviewCarousel(root, all, tags) {
+  const body = root.querySelector('.rv-body');
+  const track = root.querySelector('.rv-track');
+  const chipsBox = root.querySelector('.rv-chips');
+  const dotsBox = root.querySelector('.rv-dots');
+  const prev = root.querySelector('.rv-arrow--prev');
+  const next = root.querySelector('.rv-arrow--next');
+  body.hidden = false;
+
+  const SOURCES = {
+    yandex: { label: 'Яндекс Картах', short: 'Я', url: 'https://yandex.ru/maps/org/mir_pechati/25478937082/reviews/' },
+    '2gis': { label: '2ГИС', short: '2Г', url: 'https://2gis.ru/snezhnogorsk/firm/70000001083035959/tab/reviews' },
+  };
+  const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  const GRADIENTS = [
+    ['#7ee8c3', '#3fb8f0'], ['#a6b4ff', '#f3a6d8'], ['#f7a6a6', '#f5c26b'],
+    ['#9fe3ff', '#7d8bff'], ['#ffd36e', '#ff8fb1'], ['#b8f08f', '#40c9a2'],
+  ];
+
+  const fmtDate = (iso) => {
+    const d = new Date(`${iso}T12:00:00`);
+    if (Number.isNaN(d.getTime())) return iso || '';
+    const sameYear = d.getFullYear() === new Date().getFullYear();
+    return `${d.getDate()} ${MONTHS[d.getMonth()]}${sameYear ? '' : ` ${d.getFullYear()}`}`;
+  };
+  const hash = (str) => [...str].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+
+  const card = (r) => {
+    const src = SOURCES[r.source] || SOURCES.yandex;
+    const name = (r.name || 'Гость').trim();
+    const [g1, g2] = GRADIENTS[hash(name) % GRADIENTS.length];
+
+    const li = el('li', 'rv-card');
+    const head = el('div', 'rv-card__head');
+    const ava = el('span', 'rv-card__ava', name[0].toUpperCase());
+    ava.style.background = `linear-gradient(135deg, ${g1}, ${g2})`;
+    ava.setAttribute('aria-hidden', 'true');
+    const badge = el('span', `rv-card__badge rv-card__badge--${r.source === '2gis' ? 'gis' : 'ya'}`, src.short);
+    ava.append(badge);
+
+    const who = el('div', 'rv-card__who');
+    who.append(el('b', null, name));
+    const meta = el('span', 'rv-card__meta', `${fmtDate(r.date)} на `);
+    const a = el('a', null, src.label);
+    a.href = src.url; a.target = '_blank'; a.rel = 'noopener';
+    meta.append(a);
+    who.append(meta);
+    head.append(ava, who);
+
+    const rating = Math.max(1, Math.min(5, Math.round(r.rating || 5)));
+    const stars = el('span', 'rv-card__stars', '★'.repeat(rating) + '☆'.repeat(5 - rating));
+    stars.setAttribute('aria-label', `Оценка ${rating} из 5`);
+
+    const text = el('p', 'rv-card__text', r.text.trim());
+    const more = el('button', 'rv-card__more', 'Читать дальше');
+    more.type = 'button';
+    more.hidden = true;
+    more.addEventListener('click', () => {
+      const open = li.classList.toggle('is-open');
+      more.textContent = open ? 'Свернуть' : 'Читать дальше';
+    });
+
+    li.append(head, stars, text, more);
+    return li;
+  };
+
+  // Фильтры
+  let active = null;
+  const usable = tags.filter((t) => all.some((r) => t.match.test(r.text)));
+  const chips = usable.map((t) => {
+    const b = el('button', 'rv-chip', t.label);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => {
+      active = active === t ? null : t;
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c === b && active === t)));
+      render();
+    });
+    chipsBox.append(b);
+    return b;
+  });
+  chipsBox.hidden = !chips.length;
+
+  const gap = () => parseFloat(getComputedStyle(track).columnGap) || 0;
+  const cardStep = () => (track.firstElementChild?.getBoundingClientRect().width || track.clientWidth) + gap();
+  const perView = () => Math.max(1, Math.floor((track.clientWidth + gap() + 1) / cardStep()));
+  const pageStep = () => perView() * cardStep();
+  const pages = () => Math.max(1, Math.ceil(track.children.length / perView()));
+  const atEnd = () => track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+  const page = () => (atEnd() ? pages() - 1 : Math.round(track.scrollLeft / pageStep()));
+
+  const renderDots = () => {
+    dotsBox.textContent = '';
+    const n = pages();
+    dotsBox.hidden = n < 2;
+    for (let i = 0; i < n; i += 1) {
+      const d = el('button', 'rv-dot');
+      d.type = 'button';
+      d.setAttribute('role', 'tab');
+      d.setAttribute('aria-label', `Страница ${i + 1} из ${n}`);
+      d.addEventListener('click', () => track.scrollTo({ left: i * pageStep(), behavior: 'smooth' }));
+      dotsBox.append(d);
+    }
+    syncUI();
+  };
+  const syncUI = () => {
+    const p = page();
+    [...dotsBox.children].forEach((d, i) => d.setAttribute('aria-selected', String(i === p)));
+    prev.disabled = track.scrollLeft <= 2;
+    next.disabled = atEnd();
+  };
+  const markLong = () => {
+    track.querySelectorAll('.rv-card').forEach((c) => {
+      const t = c.querySelector('.rv-card__text');
+      c.querySelector('.rv-card__more').hidden = c.classList.contains('is-open') ? false : t.scrollHeight <= t.clientHeight + 2;
+    });
+  };
+  function render() {
+    track.textContent = '';
+    (active ? all.filter((r) => active.match.test(r.text)) : all).forEach((r) => track.append(card(r)));
+    track.scrollLeft = 0;
+    markLong();
+    renderDots();
+  }
+
+  prev.addEventListener('click', () => track.scrollBy({ left: -pageStep(), behavior: 'smooth' }));
+  next.addEventListener('click', () => track.scrollBy({ left: pageStep(), behavior: 'smooth' }));
+  track.addEventListener('scroll', syncUI, { passive: true });
+  track.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); next.click(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev.click(); }
+  });
+  let resizeT = 0;
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { markLong(); renderDots(); }, 150); });
+
+  render();
+}
 
 /* ---------- Шторка «до / после» ----------
    Тянуть можно за любое место фото (мышь, палец, стилус).
@@ -199,6 +355,12 @@ document.querySelectorAll('.compare').forEach((box) => {
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
   items.forEach((el) => io.observe(el));
 })();
+
+/* ---------- Меню «Оставить отзыв»: закрывать по клику мимо и Esc ---------- */
+document.querySelectorAll('.rv-leave').forEach((d) => {
+  document.addEventListener('click', (e) => { if (d.open && !d.contains(e.target)) d.open = false; });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') d.open = false; });
+});
 
 /* ---------- Год в футере ---------- */
 document.querySelectorAll('[data-year]').forEach((n) => { n.textContent = new Date().getFullYear(); });
