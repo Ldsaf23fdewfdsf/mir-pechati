@@ -666,8 +666,8 @@ ul, ol { list-style: none; }
 .rv-card__meta a { color: var(--c); font-weight: 600; }
 .rv-card__stars { color: #fc0; font-size: 22px; letter-spacing: 2px; }
 .rv-card__text {
-  color: var(--ink-2); font-size: 16px; line-height: 1.55;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden;
+  color: var(--ink-2); font-size: 16px; line-height: 1.55; white-space: pre-line;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden;
 }
 .rv-card.is-open .rv-card__text { -webkit-line-clamp: unset; display: block; }
 .rv-card__more {
