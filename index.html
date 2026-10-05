@@ -67,8 +67,8 @@
   var N = 7;          // число лепестков
   var L = 1400;       // длина лепестка (за краем экрана)
   var R_END = 185;    // радиус, при котором отверстие закрывает весь экран
-  var HOLD = 480;     // пауза на чёрном экране с логотипом, мс
-  var OPEN = 980;     // раскрытие, мс
+  var HOLD = 900;     // пауза на чёрном экране с логотипом, мс
+  var OPEN = 1700;    // раскрытие, мс
   var NS = 'http://www.w3.org/2000/svg';
 
   document.documentElement.style.setProperty('--intro', ((HOLD + OPEN) / 1000 - 0.1) + 's');
@@ -129,7 +129,7 @@
     draw(e * R_END, -0.35 + e * 1.25);
     if (k < 1) { requestAnimationFrame(frame); return; }
     wrap.classList.add('is-flash');
-    setTimeout(finish, 380);
+    setTimeout(finish, 400);
   }
   draw(0, -0.35);
   requestAnimationFrame(frame);
