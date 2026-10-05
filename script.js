@@ -396,7 +396,6 @@ document.querySelectorAll('.compare').forEach((box) => {
   const sheet = document.querySelector('.sheet');
   const stamp = document.querySelector('.stamp');
   const award = document.querySelector('.award');
-  const ticker = document.querySelector('.ticker__track');
   const seal = document.querySelector('.guarantee__seal svg');
   const price = document.querySelector('[data-register]');
   const compares = [...document.querySelectorAll('.compare')];
@@ -407,9 +406,6 @@ document.querySelectorAll('.compare').forEach((box) => {
   };
 
   if (!REDUCED_MOTION) root.classList.add('scroll-linked');
-  let tickerHalf = 0;
-  const measure = () => { tickerHalf = ticker ? ticker.scrollWidth / 2 : 0; };
-  measure();
 
   let queued = false;
   function frame() {
@@ -433,11 +429,6 @@ document.querySelectorAll('.compare').forEach((box) => {
         stamp.style.rotate = `${(p * 25).toFixed(1)}deg`;
       }
       if (award) award.style.translate = `${(-p * 40).toFixed(1)}px ${(-p * 30).toFixed(1)}px`;
-    }
-
-    // бегущая строка идёт в темпе прокрутки
-    if (ticker && tickerHalf && near(ticker, vh)) {
-      ticker.style.translate = `${(-((y * 0.45) % tickerHalf)).toFixed(1)}px 0`;
     }
 
     // печать гарантии проворачивается при прокрутке
@@ -469,11 +460,10 @@ document.querySelectorAll('.compare').forEach((box) => {
   };
   window.addEventListener('scroll', request, { passive: true });
   window.addEventListener('resize', () => {
-    measure();
     if (window.innerWidth <= 900) [sheet, stamp, award].forEach((el) => { if (el) { el.style.translate = ''; el.style.rotate = ''; } });
     request();
   });
-  window.addEventListener('load', () => { measure(); request(); });
+  window.addEventListener('load', request);
   frame();
 })();
 

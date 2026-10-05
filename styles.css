@@ -870,8 +870,7 @@ details p:last-child { padding-bottom: 24px; }
   display: block; height: 100%; clip-path: inset(0 100% 0 0);
   background: linear-gradient(90deg, var(--c) 0 25%, var(--m) 25% 50%, var(--y) 50% 75%, var(--k) 75%);
 }
-/* бегущая строка и печать гарантии двигаются от прокрутки, а не сами */
-.scroll-linked .ticker__track,
+/* печать гарантии проворачивается от прокрутки, а не сама */
 .scroll-linked .guarantee__seal svg { animation: none; }
 
 /* ---------- Шапка уплотняется при прокрутке ---------- */
