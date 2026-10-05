@@ -35,33 +35,44 @@ if (burger && nav) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 }
 
-/* ---------- Открыто / закрыто ---------- */
+/* ---------- Открыто / закрыто ----------
+   Считается по московскому времени при открытии страницы
+   и пересчитывается раз в минуту, пока страница открыта. */
 (function openStatus() {
   const nodes = document.querySelectorAll('[data-open-status]');
   if (!nodes.length) return;
 
-  // Текущее время в Москве, независимо от часового пояса посетителя
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Europe/Moscow', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
-  }).formatToParts(new Date());
-  const get = (t) => parts.find((p) => p.type === t)?.value;
-  const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'));
-  const now = Number(get('hour')) + Number(get('minute')) / 60;
+  const update = () => {
+    // Текущее время в Москве, независимо от часового пояса посетителя
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Moscow', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(new Date());
+    const get = (t) => parts.find((p) => p.type === t)?.value;
+    const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'));
+    const now = Number(get('hour')) + Number(get('minute')) / 60;
 
-  const [from, to] = HOURS[day];
-  let text, cls;
-  if (now >= from && now < to) {
-    text = `Сейчас открыто · Работаем до ${to}:00 по МСК`;
-    cls = 'is-open';
-  } else if (now < from) {
-    text = `Сейчас закрыто · Работаем сегодня с ${from}:00 по МСК`;
-    cls = 'is-closed';
-  } else {
-    const next = HOURS[(day + 1) % 7][0];
-    text = `Сегодня закрыто · Работаем завтра с ${next}:00 по МСК`;
-    cls = 'is-closed';
-  }
-  nodes.forEach((n) => { n.textContent = text; n.classList.add(cls); });
+    const [from, to] = HOURS[day];
+    let text, cls;
+    if (now >= from && now < to) {
+      text = `Сейчас открыто · Работаем до ${to}:00 по МСК`;
+      cls = 'is-open';
+    } else if (now < from) {
+      text = `Сейчас закрыто · Работаем сегодня с ${from}:00 по МСК`;
+      cls = 'is-closed';
+    } else {
+      const next = HOURS[(day + 1) % 7][0];
+      text = `Сегодня закрыто · Работаем завтра с ${next}:00 по МСК`;
+      cls = 'is-closed';
+    }
+    nodes.forEach((n) => {
+      n.textContent = text;
+      n.classList.toggle('is-open', cls === 'is-open');
+      n.classList.toggle('is-closed', cls === 'is-closed');
+    });
+  };
+
+  update();
+  setInterval(update, 60 * 1000);
 })();
 
 /* ---------- Отзывы ---------- */
