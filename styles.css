@@ -765,6 +765,12 @@ details p:last-child { padding-bottom: 24px; }
 .rm-park { fill: #1f3a2d; opacity: .8; }
 .rm-park-name { fill: #7fb89a; font-size: 4.4px; font-style: italic; text-anchor: middle; }
 .rm-bld path { fill: #292a32; stroke: #33343d; stroke-width: .6; }
+.rm-play rect { fill: rgb(255 225 77 / .1); stroke: rgb(255 225 77 / .55); stroke-width: .6; stroke-dasharray: 1.6 1.2; }
+.rm-play__icon { fill: none; stroke: var(--y); stroke-width: .9; stroke-linecap: round; stroke-linejoin: round; }
+.rm-play-name {
+  fill: var(--y); font-size: 4.2px; font-weight: 700; text-anchor: middle;
+  paint-order: stroke; stroke: #1b1c22; stroke-width: 2px; stroke-linejoin: round;
+}
 .rm-ours { fill: var(--m); }
 .rm-ours-num { fill: #fff; font-size: 5px; font-weight: 800; text-anchor: middle; }
 .rm-num { fill: rgb(255 255 255 / .42); font-size: 4.2px; font-weight: 700; text-anchor: middle; }
@@ -1085,7 +1091,7 @@ details p:last-child { padding-bottom: 24px; }
   summary { font-size: 17px; padding: 18px 0; }
   .rm-label { font-size: 6.2px; stroke-width: 3px; }
   .rm-label--start tspan + tspan { font-size: 5.6px; }
-  .rm-street-name, .rm-num, .rm-park-name { font-size: 5.4px; }
+  .rm-street-name, .rm-num, .rm-park-name, .rm-play-name { font-size: 5.4px; }
   .rm-ours-num { font-size: 6px; }
   .rm-replay { right: 8px; bottom: 8px; min-height: 36px; font-size: 12px; }
 
