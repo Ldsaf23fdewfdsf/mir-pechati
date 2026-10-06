@@ -519,6 +519,59 @@ document.querySelectorAll('.compare').forEach((box) => {
   frame();
 })();
 
+/* ---------- Схема «Как добраться»: путь прорисовывается от остановки до двери ---------- */
+(function routeMap() {
+  const fig = document.querySelector('.route-map');
+  const route = fig && fig.querySelector('.rm-route');
+  if (!route || !route.getTotalLength) return;
+  const walker = fig.querySelector('.rm-walker');
+  const replay = fig.querySelector('.rm-replay');
+  const steps = [...fig.querySelectorAll('.route-steps li')];
+  const marks = steps.map((li) => Number(li.dataset.at) || 0);
+  const L = route.getTotalLength();
+
+  const setProgress = (p) => {
+    route.style.strokeDasharray = `${L}`;
+    route.style.strokeDashoffset = `${L * (1 - p)}`;
+    const pt = route.getPointAtLength(L * p);
+    walker.setAttribute('transform', `translate(${pt.x.toFixed(2)} ${pt.y.toFixed(2)})`);
+    let current = -1;
+    steps.forEach((li, i) => {
+      const done = p >= marks[i];
+      li.classList.toggle('is-done', done);
+      if (done) current = i;
+    });
+    steps.forEach((li, i) => li.classList.toggle('is-current', i === current && p < 1));
+    fig.classList.toggle('is-arrived', p >= 1);
+  };
+
+  if (REDUCED_MOTION || !('IntersectionObserver' in window)) return; // схема и так нарисована целиком
+
+  fig.classList.add('is-armed');
+  setProgress(0);
+  const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+  let raf = 0;
+  const play = () => {
+    cancelAnimationFrame(raf);
+    setProgress(0);
+    const t0 = performance.now() + 450;
+    const dur = 3800;
+    const tick = (now) => {
+      const t = Math.min(1, Math.max(0, (now - t0) / dur));
+      setProgress(ease(t));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  };
+  replay?.addEventListener('click', play);
+  const io = new IntersectionObserver((entries) => {
+    if (!entries.some((e) => e.isIntersecting)) return;
+    io.disconnect();
+    play();
+  }, { threshold: 0.45 });
+  io.observe(fig.querySelector('.rm-frame'));
+})();
+
 /* ---------- Мобильная панель: прячется, пока видны кнопки первого экрана ---------- */
 (function dockState() {
   const dock = document.querySelector('.dock');

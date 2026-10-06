@@ -732,7 +732,7 @@ details p:last-child { padding-bottom: 24px; }
 .why-note b { color: var(--ink); }
 
 /* ---------- Контакты ---------- */
-.contacts { display: grid; grid-template-columns: 1fr 1.1fr; gap: clamp(32px, 5vw, 64px); align-items: stretch; }
+.contacts { display: grid; grid-template-columns: 1fr 1.1fr; gap: clamp(32px, 5vw, 64px); align-items: start; }
 .contacts__how { margin-top: 16px; color: rgb(255 255 255 / .7); font-size: 18px; }
 .hours { margin-top: 32px; max-width: 360px; }
 .hours > div { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid rgb(255 255 255 / .12); }
@@ -752,8 +752,80 @@ details p:last-child { padding-bottom: 24px; }
 }
 .messengers a:hover { background: #fff; color: var(--ink); }
 .contacts__routes { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
-.contacts__map { position: relative; min-height: 460px; border-radius: var(--radius); overflow: hidden; background: #22232a; }
-.contacts__map iframe { position: relative; z-index: 1; width: 100%; height: 100%; min-height: 460px; border: 0; display: block; }
+/* ---------- Схема «Как добраться» (геометрия из OpenStreetMap) ---------- */
+.route-map { margin: 0; display: grid; gap: 18px; align-content: start; }
+.rm-frame {
+  position: relative; border-radius: var(--radius); overflow: hidden;
+  background: #1b1c22; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .08);
+}
+.rm-svg { display: block; width: 100%; height: auto; font-family: var(--f-body); }
+.rm-streets path { fill: none; stroke: #3a3b45; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.rm-service path { fill: none; stroke: #2e2f38; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.rm-foot path { fill: none; stroke: #34353f; stroke-width: 1; stroke-dasharray: 2 2; }
+.rm-park { fill: #1f3a2d; opacity: .8; }
+.rm-park-name { fill: #7fb89a; font-size: 4.4px; font-style: italic; text-anchor: middle; }
+.rm-bld path { fill: #292a32; stroke: #33343d; stroke-width: .6; }
+.rm-ours { fill: var(--m); }
+.rm-ours-num { fill: #fff; font-size: 5px; font-weight: 800; text-anchor: middle; }
+.rm-num { fill: rgb(255 255 255 / .42); font-size: 4.2px; font-weight: 700; text-anchor: middle; }
+.rm-street-name { fill: rgb(255 255 255 / .6); font-size: 4.2px; font-weight: 700; letter-spacing: .3px; text-anchor: middle; }
+.rm-route-base { fill: none; stroke: rgb(255 225 77 / .18); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1.5 2.5; }
+.rm-route { fill: none; stroke: var(--y); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.rm-stop circle { fill: #fff; }
+.rm-stop text { fill: var(--ink); font-size: 5px; font-weight: 800; text-anchor: middle; }
+.rm-label {
+  fill: #fff; font-size: 4.4px; font-weight: 700;
+  paint-order: stroke; stroke: #1b1c22; stroke-width: 2.4px; stroke-linejoin: round;
+}
+.rm-label--start { text-anchor: end; font-weight: 600; fill: rgb(255 255 255 / .85); }
+.rm-label--end { text-anchor: middle; font-weight: 600; fill: rgb(255 255 255 / .85); }
+.rm-label__strong { font-weight: 800; fill: #fff; }
+.rm-pin__body { fill: var(--m); stroke: #fff; stroke-width: .8; }
+.rm-pin__dot { fill: #fff; }
+.rm-pin__pulse { fill: none; stroke: var(--m); stroke-width: 1; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.rm-walker { fill: #fff; stroke: var(--y); stroke-width: 1.6; opacity: 0; }
+.rm-north path { fill: rgb(255 255 255 / .7); }
+.rm-north text, .rm-scale text { fill: rgb(255 255 255 / .6); font-size: 4px; font-weight: 700; text-anchor: middle; }
+.rm-scale path { fill: none; stroke: rgb(255 255 255 / .55); stroke-width: .7; }
+.rm-replay {
+  position: absolute; right: 12px; bottom: 12px; z-index: 2;
+  min-height: 40px; padding: 0 16px; border-radius: 999px; border: 0; cursor: pointer;
+  background: rgb(255 255 255 / .12); color: #fff; font: 700 13px/1 var(--f-body);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  opacity: 0; pointer-events: none; transition: opacity .3s ease, background-color .2s;
+}
+.route-map.is-arrived .rm-replay { opacity: 1; pointer-events: auto; }
+.rm-replay:hover { background: rgb(255 255 255 / .22); }
+
+/* анимация включается только из script.js (класс is-armed); без JS схема сразу целиком */
+.route-map.is-armed .rm-walker { opacity: 1; transition: opacity .3s ease; }
+.route-map.is-armed.is-arrived .rm-walker { opacity: 0; }
+.route-map.is-armed .rm-stop { transform-box: fill-box; }
+.route-map.is-armed .rm-pin { opacity: .35; transition: opacity .4s ease; }
+.route-map.is-armed .rm-label--end { opacity: 0; transition: opacity .4s ease; }
+.route-map.is-arrived .rm-pin, .route-map.is-arrived .rm-label--end { opacity: 1; }
+.route-map.is-arrived .rm-pin__pulse { animation: rm-pulse 1.6s ease-out 2; }
+@keyframes rm-pulse { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(3.2); } }
+
+.route-steps { display: grid; gap: 0; counter-reset: step; }
+.route-steps li {
+  counter-increment: step; position: relative; padding: 11px 0 11px 44px;
+  border-top: 1px solid rgb(255 255 255 / .1); color: rgb(255 255 255 / .82); font-size: 16px;
+  transition: color .3s ease;
+}
+.route-steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 9px;
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  font: 800 13px/1 var(--f-body); color: var(--ink); background: var(--y);
+  transition: background-color .3s ease, color .3s ease, transform .3s var(--ease-out);
+}
+.route-map.is-armed .route-steps li { color: rgb(255 255 255 / .5); }
+.route-map.is-armed .route-steps li::before { background: rgb(255 255 255 / .14); color: #fff; }
+.route-map.is-armed .route-steps li.is-done { color: #fff; }
+.route-map.is-armed .route-steps li.is-done::before { background: var(--y); color: var(--ink); }
+.route-map.is-armed .route-steps li.is-current::before { transform: scale(1.12); }
+.rm-meta { margin-top: 4px; font-size: 13px; color: rgb(255 255 255 / .55); }
+.rm-meta a { color: #fff; font-weight: 700; }
 
 /* ---------- Футер ---------- */
 .footer { background: var(--ink); color: rgb(255 255 255 / .55); border-top: 1px solid rgb(255 255 255 / .1); padding: 36px 0 40px; font-size: 14px; }
@@ -1011,6 +1083,11 @@ details p:last-child { padding-bottom: 24px; }
   .tabs { margin: 6px; }
   .tab { padding: 11px 16px; }
   summary { font-size: 17px; padding: 18px 0; }
+  .rm-label { font-size: 6.2px; stroke-width: 3px; }
+  .rm-label--start tspan + tspan { font-size: 5.6px; }
+  .rm-street-name, .rm-num, .rm-park-name { font-size: 5.4px; }
+  .rm-ours-num { font-size: 6px; }
+  .rm-replay { right: 8px; bottom: 8px; min-height: 36px; font-size: 12px; }
 
   .dock {
     transition: transform .35s var(--ease-out), opacity .25s ease, visibility 0s linear 0s;
