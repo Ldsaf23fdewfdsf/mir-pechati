@@ -14,6 +14,10 @@ const MYREVIEWS = {
   name: '',   // например: 'g67325151'
 };
 
+/* Дни, когда точка закрыта (праздники, санитарные дни), в формате 'ГГГГ-ММ-ДД'.
+   Пример: ['2027-01-01', '2027-01-02']. В эти дни статус покажет «Сегодня выходной». */
+const CLOSED_DATES = [];
+
 /* Часы работы (время Мурманска = московское, UTC+3). 0 = воскресенье. */
 const HOURS = {
   0: [11, 18], 1: [11, 19], 2: [11, 19], 3: [11, 19],
@@ -50,14 +54,19 @@ if (burger && nav) {
     // Текущее время в Москве, независимо от часового пояса посетителя
     const parts = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Europe/Moscow', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
     }).formatToParts(new Date());
     const get = (t) => parts.find((p) => p.type === t)?.value;
+    const today = `${get('year')}-${get('month')}-${get('day')}`;
     const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'));
     const now = Number(get('hour')) + Number(get('minute')) / 60;
 
     const [from, to] = HOURS[day];
     let text, cls;
-    if (now >= from && now < to) {
+    if (CLOSED_DATES.includes(today)) {
+      text = 'Сегодня выходной';
+      cls = 'is-closed';
+    } else if (now >= from && now < to) {
       text = `Сейчас открыто · Работаем до ${to}:00 по МСК`;
       cls = 'is-open';
     } else if (now < from) {
@@ -170,9 +179,10 @@ function reviewCarousel(root, all, tags) {
     '2gis': { label: '2ГИС', short: '2Г', url: 'https://2gis.ru/snezhnogorsk/firm/70000001083035959/tab/reviews' },
   };
   const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
-  const GRADIENTS = [
-    ['#7ee8c3', '#3fb8f0'], ['#a6b4ff', '#f3a6d8'], ['#f7a6a6', '#f5c26b'],
-    ['#9fe3ff', '#7d8bff'], ['#ffd36e', '#ff8fb1'], ['#b8f08f', '#40c9a2'],
+  // Цвета аватарок — из палитры печати, с читаемым контрастом инициалов
+  const AVATARS = [
+    { bg: '#111216', fg: '#fff' }, { bg: '#c2006a', fg: '#fff' },
+    { bg: '#00648c', fg: '#fff' }, { bg: '#ffe14d', fg: '#111216' },
   ];
 
   const fmtDate = (iso) => {
@@ -192,12 +202,13 @@ function reviewCarousel(root, all, tags) {
   const card = (r) => {
     const src = SOURCES[r.source] || SOURCES.yandex;
     const name = (r.name || 'Гость').trim();
-    const [g1, g2] = GRADIENTS[hash(name) % GRADIENTS.length];
+    const tone = AVATARS[hash(name) % AVATARS.length];
 
     const li = el('li', 'rv-card');
     const head = el('div', 'rv-card__head');
     const ava = el('span', 'rv-card__ava', name[0].toUpperCase());
-    ava.style.background = `linear-gradient(135deg, ${g1}, ${g2})`;
+    ava.style.background = tone.bg;
+    ava.style.color = tone.fg;
     ava.setAttribute('aria-hidden', 'true');
     const badge = el('span', `rv-card__badge rv-card__badge--${r.source === '2gis' ? 'gis' : 'ya'}`, src.short);
     ava.append(badge);
@@ -228,9 +239,16 @@ function reviewCarousel(root, all, tags) {
     return li;
   };
 
-  // Фильтры
+  // Свежие сверху
+  all = [...all].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+
+  // Фильтры: только те, что реально сужают список (подходят части отзывов, а не всем)
   let active = null;
-  const usable = tags.filter((t) => all.some((r) => t.match.test(r.text)));
+  let usable = tags.filter((t) => {
+    const n = all.filter((r) => t.match.test(r.text)).length;
+    return n > 0 && n < all.length;
+  });
+  if (usable.length < 2) usable = [];
   const chips = usable.map((t) => {
     const b = el('button', 'rv-chip', t.label);
     b.type = 'button';
@@ -260,8 +278,7 @@ function reviewCarousel(root, all, tags) {
     for (let i = 0; i < n; i += 1) {
       const d = el('button', 'rv-dot');
       d.type = 'button';
-      d.setAttribute('role', 'tab');
-      d.setAttribute('aria-label', `Страница ${i + 1} из ${n}`);
+      d.setAttribute('aria-label', `Отзывы, страница ${i + 1} из ${n}`);
       d.addEventListener('click', () => track.scrollTo({ left: i * pageStep(), behavior: 'smooth' }));
       dotsBox.append(d);
     }
@@ -269,7 +286,9 @@ function reviewCarousel(root, all, tags) {
   };
   const syncUI = () => {
     const p = page();
-    [...dotsBox.children].forEach((d, i) => d.setAttribute('aria-selected', String(i === p)));
+    [...dotsBox.children].forEach((d, i) => {
+      if (i === p) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current');
+    });
     prev.disabled = track.scrollLeft <= 2;
     next.disabled = atEnd();
   };
@@ -504,7 +523,7 @@ document.querySelectorAll('.compare').forEach((box) => {
   if (!dock || !heroCta || !('IntersectionObserver' in window)) return;
   new IntersectionObserver(([e]) => {
     dock.classList.toggle('is-tucked', e.isIntersecting);
-  }).observe(heroCta);
+  }, { rootMargin: '-90px 0px 0px 0px' }).observe(heroCta);
 })();
 
 /* ---------- Бесконечные циклы стоят, когда их не видно ---------- */

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Красивые фотографии на документы в Снежногорске | МИР Печати</title>
-  <meta name="description" content="Фото на паспорт с ретушью: 4 фото за 800 ₽ в Снежногорске. Не примут — переснимем бесплатно. Виза, загран, 3×4. ул. Павла Стеблина, 16.">
+  <meta name="description" content="Фото на любые документы с ретушью — 800 ₽, 4 фото. Паспорт, загран, виза, 3×4. Не примут — переснимем бесплатно. Снежногорск, ул. Павла Стеблина, 16.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Красивые фотографии на документы в Снежногорске — МИР Печати">
   <meta property="og:description" content="Фото на паспорт с ретушью — 800 ₽. Готово за 15 минут. ул. Павла Стеблина, 16, вход со двора.">
@@ -47,7 +47,7 @@
     ],
     "makesOffer": {
       "@type": "Offer",
-      "name": "Фото на паспорт РФ с ретушью, 4 фото",
+      "name": "Фото на любые документы с ретушью, 4 фото",
       "price": "800",
       "priceCurrency": "RUB"
     }
@@ -57,11 +57,17 @@
 <body>
 <script>
 /* Вступление: страница раскрывается, как диафрагма фотоаппарата.
-   Один раз за сеанс; клик или клавиша пропускают; при «уменьшить движение» не показывается. */
+   Показывается раз в 3 дня; клик или клавиша пропускают (первый экран тогда стартует сразу);
+   при «уменьшить движение» не показывается. */
 (function () {
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var EVERY = 3 * 24 * 60 * 60 * 1000;   // показывать не чаще раза в 3 дня
   var seen = false;
-  try { seen = sessionStorage.getItem('mp-intro') === '1'; sessionStorage.setItem('mp-intro', '1'); } catch (e) {}
+  try {
+    var last = Number(localStorage.getItem('mp-intro-at')) || 0;
+    seen = Date.now() - last < EVERY;
+    if (!seen) localStorage.setItem('mp-intro-at', String(Date.now()));
+  } catch (e) {}
   if (reduce || seen || !document.body.prepend) return;
 
   var N = 7;          // число лепестков
@@ -69,9 +75,10 @@
   var R_END = 185;    // радиус, при котором отверстие закрывает весь экран
   var HOLD = 900;     // пауза на чёрном экране с логотипом, мс
   var OPEN = 1700;    // раскрытие, мс
+  var INTRO_DELAY = HOLD + OPEN - 100;   // на столько сдвинута анимация первого экрана
   var NS = 'http://www.w3.org/2000/svg';
 
-  document.documentElement.style.setProperty('--intro', ((HOLD + OPEN) / 1000 - 0.1) + 's');
+  document.documentElement.style.setProperty('--intro', (INTRO_DELAY / 1000) + 's');
 
   var wrap = document.createElement('div');
   wrap.className = 'iris';
@@ -84,7 +91,8 @@
       '</defs><g></g>' +
     '</svg>' +
     '<div class="iris__logo"><span class="logo__dots"><i></i><i></i><i></i><i></i></span><span>МИР <b>Печати</b></span></div>' +
-    '<div class="iris__flash"></div>';
+    '<div class="iris__flash"></div>' +
+    '<span class="iris__skip">Пропустить</span>';
   document.body.prepend(wrap);
 
   var g = wrap.querySelector('g');
@@ -114,9 +122,22 @@
 
   var start = performance.now();
   var done = false;
-  function finish() {
+  // При пропуске первый экран не ждёт конца вступления: снимаем задержку и запускаем сейчас
+  function startHeroNow() {
+    if (!document.getAnimations) return;
+    var now = document.timeline ? document.timeline.currentTime : null;
+    document.getAnimations().forEach(function (a) {
+      var t = a.effect && a.effect.target;
+      if (!t || !t.closest || !t.closest('.hero')) return;
+      var d = a.effect.getTiming().delay || 0;
+      a.effect.updateTiming({ delay: Math.max(0, d - INTRO_DELAY) });
+      if (now != null) a.startTime = now;
+    });
+  }
+  function finish(skipped) {
     if (done) return;
     done = true;
+    if (skipped === true) startHeroNow();
     wrap.classList.add('is-done');
     setTimeout(function () { wrap.remove(); }, 400);
   }
@@ -134,8 +155,8 @@
   draw(0, -0.35);
   requestAnimationFrame(frame);
 
-  wrap.addEventListener('pointerdown', finish);
-  window.addEventListener('keydown', finish, { once: true });
+  wrap.addEventListener('pointerdown', function () { finish(true); });
+  window.addEventListener('keydown', function () { finish(true); }, { once: true });
 })();
 </script>
 
@@ -157,9 +178,9 @@
     <nav class="nav" id="nav" aria-label="Разделы">
       <a href="#price">Цена</a>
       <a href="#retouch">Ретушь</a>
-      <a href="#docs">Документы</a>
       <a href="#services">Услуги</a>
       <a href="#reviews">Отзывы</a>
+      <a href="#faq">Вопросы</a>
       <a href="#contacts">Как найти</a>
     </nav>
 
@@ -177,15 +198,15 @@
   <section class="hero">
     <div class="wrap hero__grid">
       <div class="hero__copy">
-        <p class="eyebrow"><span class="cmyk-tick" aria-hidden="true"></span>Снежногорск · ул. Павла Стеблина, 16</p>
+        <p class="hero__place"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Снежногорск, ул.&nbsp;Павла Стеблина,&nbsp;16, вход со&nbsp;двора</p>
         <h1 class="hero__title">Красивые фотографии <span class="hl">на&nbsp;документы</span> в&nbsp;Снежногорске</h1>
         <p class="hero__lead">Снимаем, показываем все дубли, аккуратно ретушируем и&nbsp;печатаем. Копии документов сделаем сразу&nbsp;же, чтобы не&nbsp;искать ксерокс по&nbsp;городу.</p>
 
         <ul class="hero__facts">
-          <li><b>800 ₽</b> 4&nbsp;фото с&nbsp;ретушью</li>
-          <li><b>~15 мин</b> от&nbsp;съёмки до&nbsp;печати</li>
-          <li><b>Гарантия:</b> не&nbsp;примут&nbsp;— переснимем</li>
-          <li><b>4,9 ★</b> на&nbsp;Яндекс Картах</li>
+          <li><b>800 ₽</b>любой документ, 4&nbsp;фото</li>
+          <li><b>~15 мин</b>до&nbsp;готовых фото</li>
+          <li><b>Гарантия</b>не&nbsp;примут&nbsp;— переснимем</li>
+          <li><b>4,9 из 5</b>на&nbsp;Яндекс Картах</li>
         </ul>
 
         <div class="hero__cta">
@@ -196,7 +217,7 @@
           <a class="btn btn--ghost" href="#contacts">Как нас найти</a>
         </div>
         <p class="status status--hero" data-open-status></p>
-        <p class="hero__note">Можно просто прийти в&nbsp;часы работы. Хотите без&nbsp;ожидания&nbsp;— напишите заранее в&nbsp;<a href="https://wa.me/79095596960" target="_blank" rel="noopener">WhatsApp</a> или <a href="https://t.me/+79095596960" target="_blank" rel="noopener">Telegram</a>.</p>
+        <p class="hero__note">Без записи: <b>Пн–Пт 11–19, Сб–Вс 11–18</b>. Телефон <a href="tel:+79095596960">+7&nbsp;909&nbsp;559-69-60</a>, можно написать в&nbsp;<a href="https://wa.me/79095596960" target="_blank" rel="noopener">WhatsApp</a> или <a href="https://t.me/+79095596960" target="_blank" rel="noopener">Telegram</a>.</p>
       </div>
 
       <!-- Визуал: лист из 4 фото 35×45 с метками обреза -->
@@ -237,101 +258,72 @@
   </div>
   </div>
 
-  <!-- ============ ЦЕНА ============ -->
+  <!-- ============ ЦЕНА + РАЗМЕРЫ ============ -->
   <section class="section section--ink" id="price">
     <div class="wrap">
-      <header class="section__head">
-        <p class="eyebrow eyebrow--light">Цена</p>
-        <h2 class="h2">Одна цена, без&nbsp;доплат за&nbsp;ретушь</h2>
+      <header class="section__head section__head--split">
+        <h2 class="h2">Одна цена на&nbsp;любые документы</h2>
+        <p class="lead">Паспорт, загран, виза, 3×4&nbsp;— съёмка, ретушь и&nbsp;печать 4&nbsp;фото. Без доплат за&nbsp;ретушь.</p>
       </header>
 
       <div class="price">
         <article class="price__main">
           <div class="price__top">
-            <h3>Фото на паспорт РФ</h3>
+            <h3>Фото на&nbsp;документы</h3>
             <span class="badge">с ретушью</span>
           </div>
           <p class="price__value" data-register>800 <span>₽</span></p>
           <ul class="checks">
-            <li>Съёмка на ровном светлом фоне по&nbsp;требованиям МВД</li>
-            <li>Несколько дублей, вы&nbsp;сами выбираете лучший кадр</li>
+            <li>Несколько дублей на&nbsp;светлом фоне по&nbsp;требованиям МВД, кадр выбираете вы</li>
             <li>Деликатная ретушь: убираем блики и&nbsp;покраснения, лицо остаётся вашим</li>
             <li>Печать 4&nbsp;фото на&nbsp;плотной фотобумаге</li>
             <li>Электронная версия для Госуслуг по&nbsp;запросу</li>
-            <li><b>Гарантия:</b> если фото не&nbsp;примут, переснимем и&nbsp;напечатаем бесплатно</li>
+            <li><b>Гарантия:</b> не&nbsp;примут&nbsp;— переснимем и&nbsp;напечатаем бесплатно</li>
           </ul>
           <div class="price__cta">
             <a class="btn btn--yellow" href="tel:+79095596960">Позвонить</a>
-            <a class="btn btn--line" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!%20%D0%A5%D0%BE%D1%87%D1%83%20%D1%84%D0%BE%D1%82%D0%BE%20%D0%BD%D0%B0%20%D0%BF%D0%B0%D1%81%D0%BF%D0%BE%D1%80%D1%82" target="_blank" rel="noopener">Написать в WhatsApp</a>
+            <a class="btn btn--line" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D1%81%D1%84%D0%BE%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D1%82%D1%8C%D1%81%D1%8F%20%D0%BD%D0%B0%20%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D1%8B." target="_blank" rel="noopener">Написать в WhatsApp</a>
           </div>
-        </article>
-
-        <aside class="price__side">
-          <h3 class="price__side-title">Заодно в&nbsp;этот&nbsp;же визит</h3>
-          <dl class="mini-prices">
-            <div><dt>Ксерокопия, распечатка А4</dt><dd>от 20 ₽</dd></div>
-            <div><dt>Печать фото 10×15, 15×21, 21×30</dt><dd>от 30 ₽</dd></div>
-            <div><dt>Сканирование и отправка на e-mail</dt><dd>есть</dd></div>
-          </dl>
-          <p class="price__side-note">Фото на&nbsp;визу, загран и&nbsp;другие документы снимаем так&nbsp;же. Точную цену под ваш документ подскажем по&nbsp;телефону за&nbsp;минуту.</p>
           <p class="price__pay">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/></svg>
             Принимаем оплату картой
           </p>
+        </article>
+
+        <aside class="specimens" aria-labelledby="spec-title">
+          <h3 class="specimens__title" id="spec-title">Размеры, которые снимаем</h3>
+          <p class="specimens__note">Примерно в&nbsp;натуральную величину</p>
+          <div class="specimens__row" aria-hidden="true">
+            <div class="spec" style="--w: 35; --h: 45">
+              <div class="spec__paper"><img src="img/passport.jpg" alt="" width="420" height="540" loading="lazy"></div>
+              <span class="spec__dim spec__dim--w">35</span><span class="spec__dim spec__dim--h">45</span>
+            </div>
+            <div class="spec" style="--w: 30; --h: 40">
+              <div class="spec__paper"><span class="spec__guide"></span></div>
+              <span class="spec__dim spec__dim--w">30</span><span class="spec__dim spec__dim--h">40</span>
+            </div>
+            <div class="spec" style="--w: 50; --h: 50">
+              <div class="spec__paper"><span class="spec__guide"></span></div>
+              <span class="spec__dim spec__dim--w">50</span><span class="spec__dim spec__dim--h">50</span>
+            </div>
+          </div>
+          <dl class="spec-list">
+            <div><dt>35×45 мм</dt><dd>Паспорт РФ (в&nbsp;14, 20 и&nbsp;45&nbsp;лет, после замужества), загранпаспорт, Шенген, ВНЖ и&nbsp;гражданство</dd></div>
+            <div><dt>30×40 мм</dt><dd>Фото 3×4: военный билет, медкнижка, студенческий, пропуск, удостоверения, медкомиссия</dd></div>
+            <div><dt>50×50 мм</dt><dd>Виза в&nbsp;США</dd></div>
+          </dl>
+          <p class="specimens__more">Не&nbsp;нашли свой документ? <a href="tel:+79095596960">Позвоните</a>, подскажем требования. Цена та&nbsp;же.</p>
         </aside>
       </div>
     </div>
   </section>
 
-  <!-- ============ ПОЧЕМУ МЫ ============ -->
-  <section class="section" id="why">
-    <div class="wrap why">
-      <header class="why__head">
-        <p class="eyebrow"><span class="cmyk-tick" aria-hidden="true"></span>Почему к нам</p>
-        <h2 class="h2">Не&nbsp;фотоавтомат и&nbsp;не&nbsp;конвейер</h2>
-        <p class="lead">Паспорт вы будете открывать ещё 5, 10, 20&nbsp;лет. Мы&nbsp;не&nbsp;торопим и&nbsp;снимаем, пока фото не&nbsp;понравится вам самим.</p>
-      </header>
-
-      <ol class="why__list">
-        <li class="reveal">
-          <span class="why__num">01</span>
-          <div>
-            <h3>Кадр выбираете вы</h3>
-            <p>Делаем несколько дублей и&nbsp;показываем их на&nbsp;экране. Не&nbsp;нравится ни&nbsp;один? Переснимем.</p>
-          </div>
-        </li>
-        <li class="reveal">
-          <span class="why__num">02</span>
-          <div>
-            <h3>Ретушь без «пластика»</h3>
-            <p>Убираем то, что даёт камера: блеск, покраснения, случайные волоски. Морщинки и&nbsp;черты лица оставляем вашими.</p>
-          </div>
-        </li>
-        <li class="reveal">
-          <span class="why__num">03</span>
-          <div>
-            <h3>Всё за&nbsp;один визит</h3>
-            <p>Сфотографировали, напечатали, сделали копии паспорта и&nbsp;СНИЛС, распечатали анкету. С&nbsp;документами в&nbsp;МФЦ можно идти сразу.</p>
-          </div>
-        </li>
-        <li class="reveal">
-          <span class="why__num">04</span>
-          <div>
-            <h3>Пришлите файл заранее</h3>
-            <p>Отправьте документы в&nbsp;WhatsApp или Telegram, распечатаем к&nbsp;вашему приходу. Есть срочная печать.</p>
-          </div>
-        </li>
-      </ol>
-    </div>
-  </section>
-
   <!-- ============ ДО / ПОСЛЕ ============ -->
-  <section class="section section--tight" id="retouch">
+  <section class="section" id="retouch">
     <div class="wrap ba">
       <div class="ba__copy">
-        <p class="eyebrow"><span class="cmyk-tick" aria-hidden="true"></span>До и после</p>
         <h2 class="h2">Ретушь, после которой вы&nbsp;остаётесь собой</h2>
-        <p class="lead">Листайте страницу или тяните шторку рукой. Слева кадр без ретуши, как его отдают в&nbsp;обычном фотосалоне. Справа то, что вы&nbsp;получите в&nbsp;МИР Печати.</p>
+        <p class="lead">Паспорт вы&nbsp;будете открывать ещё 10–20&nbsp;лет, поэтому мы&nbsp;не&nbsp;торопим: делаем несколько дублей, кадр выбираете вы, а&nbsp;ретушь убирает только то, что добавила камера.</p>
         <ul class="ba__list" data-connect>
           <li>Выравниваем тон кожи, убираем блеск и&nbsp;покраснения</li>
           <li>Смягчаем тени под глазами</li>
@@ -349,6 +341,7 @@
           <span class="compare__handle" aria-hidden="true"><span class="compare__hint">Потяните</span></span>
           <input class="compare__range" type="range" min="0" max="100" value="50" aria-label="Сравнить фото до и после ретуши: стрелками влево и вправо">
         </div>
+        <p class="ba__caption">Листайте страницу или потяните шторку: слева кадр без&nbsp;ретуши, как в&nbsp;обычном фотосалоне, справа&nbsp;— результат в&nbsp;МИР Печати.</p>
       </div>
     </div>
   </section>
@@ -358,7 +351,7 @@
     <div class="wrap">
       <div class="guarantee">
         <div class="guarantee__seal" aria-hidden="true">
-          <svg viewBox="0 0 120 120"><defs><path id="seal-path" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs><text><textPath href="#seal-path" textLength="286" lengthAdjust="spacing">ГАРАНТИЯ • ПРИМУТ • ГАРАНТИЯ • ПРИМУТ •</textPath></text></svg>
+          <svg viewBox="0 0 120 120"><defs><path id="seal-path" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs><text><textPath href="#seal-path" textLength="286" lengthAdjust="spacing">ПРИМУТ ИЛИ ПЕРЕСНИМЕМ • ГАРАНТИЯ •</textPath></text></svg>
           <b>✓</b>
         </div>
         <div class="guarantee__copy">
@@ -370,152 +363,55 @@
     </div>
   </section>
 
-  <!-- ============ ДОКУМЕНТЫ ============ -->
-  <section class="section section--paper" id="docs">
-    <div class="wrap">
-      <header class="section__head section__head--split">
-        <div>
-          <p class="eyebrow"><span class="cmyk-tick" aria-hidden="true"></span>Фото на документы</p>
-          <h2 class="h2">Снимаем на&nbsp;любые документы</h2>
-        </div>
-        <p class="lead">Знаем требования к&nbsp;размеру, фону и&nbsp;положению головы. Скажите, для чего фото, остальное за&nbsp;нами.</p>
+  <!-- ============ И НЕ ТОЛЬКО ПРО ДОКУМЕНТЫ: ПРАЙС-ЧЕК ============ -->
+  <section class="section section--paper" id="services">
+    <div class="wrap services">
+      <header class="services__head">
+        <h2 class="h2">И&nbsp;не&nbsp;только про документы</h2>
+        <p class="lead">Распечатаем, восстановим старые фото, сделаем визитки. Пришлите файл или фото в&nbsp;WhatsApp&nbsp;— назовём цену и&nbsp;срок, а&nbsp;распечатаем к&nbsp;вашему приходу.</p>
+        <a class="btn btn--ghost" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D1%83%D0%B7%D0%BD%D0%B0%D1%82%D1%8C%20%D1%86%D0%B5%D0%BD%D1%83%20%D0%BD%D0%B0%20%D0%BF%D0%B5%D1%87%D0%B0%D1%82%D1%8C." target="_blank" rel="noopener">Спросить цену в WhatsApp</a>
       </header>
 
-      <ul class="docs">
-        <li class="doc doc--wide reveal">
-          <span class="doc__size">35×45</span>
-          <h3>Паспорт РФ</h3>
-          <p>В&nbsp;14, 20 и&nbsp;45 лет, после замужества, при утере</p>
-        </li>
-        <li class="doc reveal">
-          <span class="doc__size">35×45</span>
-          <h3>Загранпаспорт</h3>
-          <p>Старого и&nbsp;нового образца, для анкеты</p>
-        </li>
-        <li class="doc reveal">
-          <span class="doc__size">35×45 · 50×50</span>
-          <h3>Визы</h3>
-          <p>Шенген, США и&nbsp;другие страны</p>
-        </li>
-        <li class="doc reveal">
-          <span class="doc__size">30×40</span>
-          <h3>Фото 3×4</h3>
-          <p>Военный билет, медкнижка, студенческий, пропуск</p>
-        </li>
-        <li class="doc reveal">
-          <h3>ВНЖ и гражданство</h3>
-          <p>Для подачи документов в&nbsp;МВД</p>
-        </li>
-        <li class="doc reveal">
-          <h3>Удостоверения</h3>
-          <p>Пенсионное, удостоверение инвалида, охотничий билет</p>
-        </li>
-        <li class="doc reveal">
-          <h3>Справки и комиссии</h3>
-          <p>Водительская медкомиссия, справки, поступление в&nbsp;вуз</p>
-        </li>
-        <li class="doc doc--accent reveal">
-          <h3>Не нашли свой документ?</h3>
-          <p>Позвоните, подскажем требования и&nbsp;цену.</p>
-          <a class="doc__link" href="tel:+79095596960">+7 909 559-69-60 →</a>
-        </li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ============ И НЕ ТОЛЬКО ПРО ДОКУМЕНТЫ ============ -->
-  <section class="section" id="services">
-    <div class="wrap">
-      <header class="section__head section__head--split">
-        <div>
-          <p class="eyebrow"><span class="cmyk-tick" aria-hidden="true"></span>Печать и фото</p>
-          <h2 class="h2">И&nbsp;не только про документы</h2>
+      <div class="receipt">
+        <div class="receipt__head">
+          <span class="receipt__brand">МИР Печати</span>
+          <span>Прайс · ул.&nbsp;Павла Стеблина,&nbsp;16</span>
         </div>
-        <p class="lead">Распечатаем, восстановим, сделаем визитки. Пришлите файл или фото в&nbsp;WhatsApp, и&nbsp;мы&nbsp;назовём цену и&nbsp;срок.</p>
-      </header>
 
-      <div class="feature-grid">
-        <article class="feature feature--c reveal">
-          <span class="feature__icon"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 18V6h20v12"/><rect x="6" y="18" width="36" height="16" rx="3"/><path d="M14 28h20v14H14z"/><path d="M19 34h10M19 38h6"/><circle cx="36" cy="23.5" r="1.6" class="fill"/></svg></span>
-          <h3>Распечатка и&nbsp;копии</h3>
-          <p>Документы, анкеты, билеты, рефераты. С&nbsp;флешки, почты или прямо из&nbsp;WhatsApp и&nbsp;Telegram.</p>
-          <ul class="feature__list">
-            <li>Ч/б и&nbsp;цветная печать А4</li>
-            <li>Ксерокопии паспорта, СНИЛС, свидетельств</li>
-            <li>Сканирование с&nbsp;отправкой на&nbsp;почту</li>
-            <li>Срочная печать, пока вы&nbsp;ждёте</li>
+        <div class="receipt__group">
+          <h3>Печать и&nbsp;копии</h3>
+          <ul>
+            <li><span class="receipt__name">Ксерокопия и&nbsp;распечатка А4<small>Ч/б и&nbsp;цвет, с&nbsp;флешки, почты, WhatsApp и&nbsp;Telegram. Срочно, пока вы&nbsp;ждёте</small></span><span class="receipt__price">от 20 ₽</span></li>
+            <li><span class="receipt__name">Сканирование<small>С&nbsp;отправкой на&nbsp;почту или в&nbsp;мессенджер</small></span><a class="receipt__ask" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D1%82%D1%81%D0%BA%D0%B0%D0%BD%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D1%82%D1%8C%20%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D1%8B." target="_blank" rel="noopener">спросить</a></li>
+            <li><span class="receipt__name">Визитки под&nbsp;ключ<small>Дизайн с&nbsp;нуля или по&nbsp;вашему макету, плотная бумага, любой тираж</small></span><a class="receipt__ask" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%B0%D1%82%D1%8C%20%D0%B2%D0%B8%D0%B7%D0%B8%D1%82%D0%BA%D0%B8." target="_blank" rel="noopener">рассчитать</a></li>
           </ul>
-          <div class="feature__foot">
-            <span class="feature__price">от 20 ₽ <small>за лист</small></span>
-            <a class="feature__link" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D1%80%D0%B0%D1%81%D0%BF%D0%B5%D1%87%D0%B0%D1%82%D0%B0%D1%82%D1%8C%20%D0%B4%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D1%8B." target="_blank" rel="noopener">Отправить файл →</a>
-          </div>
-        </article>
+        </div>
 
-        <article class="feature feature--m reveal">
-          <span class="feature__icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="9" width="28" height="30" rx="2" transform="rotate(-6 21 24)"/><path d="M12 30l6-7 5 5 4-4 6 7" transform="rotate(-6 21 24)"/><circle cx="25" cy="17" r="2.4" transform="rotate(-6 21 24)"/><path d="M38 6v8M34 10h8M41 20v5M38.5 22.5h5"/></svg></span>
-          <h3>Восстановление старых фото</h3>
-          <p>Вернём к&nbsp;жизни выцветшие, мятые и&nbsp;порванные снимки из&nbsp;семейного альбома.</p>
-          <ul class="feature__list">
-            <li>Убираем трещины, пятна и&nbsp;заломы</li>
-            <li>Возвращаем цвет, контраст и&nbsp;резкость</li>
-            <li>Фото на&nbsp;памятник и&nbsp;в&nbsp;рамку</li>
-            <li>Отдаём файл и&nbsp;печать нужного размера</li>
+        <div class="receipt__group">
+          <h3>Фото</h3>
+          <ul>
+            <li><span class="receipt__name">Печать фотографий<small>10×15, 15×21, 21×30, глянцевая или матовая бумага</small></span><span class="receipt__price">от 30 ₽</span></li>
+            <li><span class="receipt__name">Восстановление старых фото<small>Трещины, пятна, заломы, выцветший цвет. Фото на&nbsp;памятник</small></span><a class="receipt__ask" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B2%D0%BE%D1%81%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%82%D1%8C%20%D1%81%D1%82%D0%B0%D1%80%D1%83%D1%8E%20%D1%84%D0%BE%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8E.%20%D0%A1%D0%B5%D0%B9%D1%87%D0%B0%D1%81%20%D0%BF%D1%80%D0%B8%D1%88%D0%BB%D1%8E%20%D0%B5%D1%91." target="_blank" rel="noopener">прислать фото</a></li>
+            <li><span class="receipt__name">Обработка и&nbsp;ретушь снимков<small>Свет, цвет, кожа на&nbsp;ваших фотографиях</small></span><a class="receipt__ask" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0%D1%82%D1%8C%20%D1%84%D0%BE%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D0%B8." target="_blank" rel="noopener">спросить</a></li>
           </ul>
-          <div class="feature__foot">
-            <span class="feature__price">оценим <small>по фото</small></span>
-            <a class="feature__link" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B2%D0%BE%D1%81%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%82%D1%8C%20%D1%81%D1%82%D0%B0%D1%80%D1%83%D1%8E%20%D1%84%D0%BE%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D1%8E.%20%D0%A1%D0%B5%D0%B9%D1%87%D0%B0%D1%81%20%D0%BF%D1%80%D0%B8%D1%88%D0%BB%D1%8E%20%D0%B5%D1%91." target="_blank" rel="noopener">Прислать фото →</a>
-          </div>
-        </article>
+        </div>
 
-        <article class="feature feature--y reveal">
-          <span class="feature__icon"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="13" width="32" height="20" rx="2.5" transform="rotate(-8 21 23)"/><rect x="11" y="17" width="32" height="20" rx="2.5"/><path d="M16 24h12M16 29h8"/><circle cx="37" cy="27" r="2.6"/></svg></span>
-          <h3>Визитки под&nbsp;ключ</h3>
-          <p>Придумаем дизайн с&nbsp;нуля или напечатаем по&nbsp;вашему макету. Для мастеров, магазинов и&nbsp;частных специалистов.</p>
-          <ul class="feature__list">
-            <li>Разработка дизайна и&nbsp;логотипа на&nbsp;визитке</li>
-            <li>Печать на&nbsp;плотной бумаге</li>
-            <li>Односторонние и&nbsp;двусторонние</li>
-            <li>Любой тираж: от&nbsp;небольшой пачки</li>
+        <div class="receipt__group">
+          <h3>Подарки и&nbsp;сувениры</h3>
+          <ul>
+            <li><span class="receipt__name">3D-печать<small>Детали, фигурки и&nbsp;подарки по&nbsp;вашей модели</small></span><span class="receipt__price">от 500 ₽</span></li>
+            <li><span class="receipt__name">Магниты «Снежногорск»<small>С&nbsp;видами города</small></span><span class="receipt__price">199 ₽</span></li>
+            <li><span class="receipt__name">Брелки «Снежногорск»</span><span class="receipt__price">150 ₽</span></li>
+            <li><span class="receipt__name">Подарочные сертификаты<small>На&nbsp;любые услуги</small></span><a class="receipt__ask" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BF%D0%BE%D0%B4%D0%B0%D1%80%D0%BE%D1%87%D0%BD%D1%8B%D0%B9%20%D1%81%D0%B5%D1%80%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%82." target="_blank" rel="noopener">спросить</a></li>
           </ul>
-          <div class="feature__foot">
-            <span class="feature__price">рассчитаем <small>тираж</small></span>
-            <a class="feature__link" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%B0%D1%82%D1%8C%20%D0%B2%D0%B8%D0%B7%D0%B8%D1%82%D0%BA%D0%B8." target="_blank" rel="noopener">Заказать →</a>
-          </div>
-        </article>
+        </div>
+
+        <div class="receipt__tear" aria-hidden="true"></div>
+        <div class="receipt__foot">
+          <span>Оплата картой</span>
+          <span>Нужно что-то ещё? <a href="tel:+79095596960">+7&nbsp;909&nbsp;559-69-60</a></span>
+        </div>
       </div>
-
-      <ul class="mini-services">
-        <li class="reveal">
-          <h3>Печать фотографий</h3>
-          <p>10×15, 15×21, 21×30 на&nbsp;глянцевой или матовой бумаге</p>
-          <span>от 30 ₽</span>
-        </li>
-        <li class="reveal">
-          <h3>Обработка и&nbsp;ретушь</h3>
-          <p>Подправим свет, цвет и&nbsp;кожу на&nbsp;ваших снимках</p>
-          <a href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0%D1%82%D1%8C%20%D1%84%D0%BE%D1%82%D0%BE%D0%B3%D1%80%D0%B0%D1%84%D0%B8%D0%B8." target="_blank" rel="noopener">узнать цену</a>
-        </li>
-        <li class="reveal">
-          <h3>3D-печать</h3>
-          <p>Детали, фигурки и&nbsp;подарки по&nbsp;вашей модели</p>
-          <span>от 500 ₽</span>
-        </li>
-        <li class="reveal">
-          <h3>Сувениры «Снежногорск»</h3>
-          <p>Магниты с&nbsp;видами города 199&nbsp;₽, брелки 150&nbsp;₽</p>
-          <span>от 150 ₽</span>
-        </li>
-        <li class="reveal">
-          <h3>Подарочные сертификаты</h3>
-          <p>На&nbsp;фото на&nbsp;документы, печать и&nbsp;любые услуги</p>
-          <a href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21%20%D0%A5%D0%BE%D1%87%D1%83%20%D0%BF%D0%BE%D0%B4%D0%B0%D1%80%D0%BE%D1%87%D0%BD%D1%8B%D0%B9%20%D1%81%D0%B5%D1%80%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%82." target="_blank" rel="noopener">узнать цену</a>
-        </li>
-        <li class="reveal mini-services__more">
-          <h3>Нужно что-то ещё?</h3>
-          <p>Спросите, скорее всего мы&nbsp;это делаем</p>
-          <a href="tel:+79095596960">+7 909 559-69-60</a>
-        </li>
-      </ul>
     </div>
   </section>
 
@@ -523,8 +419,7 @@
   <section class="section section--paper" id="reviews">
     <div class="wrap">
       <header class="section__head">
-        <p class="eyebrow"><span class="cmyk-tick" aria-hidden="true"></span>Отзывы</p>
-        <h2 class="h2 h2--xl">Ваши отзывы</h2>
+        <h2 class="h2">Отзывы клиентов</h2>
       </header>
 
       <div class="award-banner">
@@ -533,41 +428,34 @@
           <span>2026</span>
         </div>
         <div class="award-banner__copy">
-          <p class="award-banner__kicker">Награда Яндекс Карт</p>
           <h3 class="award-banner__title">Хорошее место 2026</h3>
-          <p>Яндекс Карты отмечают ею любимые места своих пользователей. Спасибо всем, кто ставит нам оценки и&nbsp;пишет отзывы!</p>
+          <p>Награда Яндекс Карт для любимых мест пользователей. Спасибо всем, кто ставит нам оценки и&nbsp;пишет отзывы!</p>
         </div>
-        <a class="award-banner__score" href="https://yandex.ru/maps/org/mir_pechati/25478937082/reviews/" target="_blank" rel="noopener">
-          <b>4,9</b>
-          <span class="stars" aria-hidden="true">★★★★★</span>
-          <span>40 оценок</span>
-        </a>
       </div>
 
       <!-- Карусель отзывов. Отзывы берутся из reviews.js; если там пусто — показываются вкладки ниже -->
       <div class="rv" id="rv">
         <div class="rv-summary">
-          <span class="rv-total"><b>4,9</b><span class="rv-total__star" aria-hidden="true">★</span><i aria-hidden="true"></i><span>51 оценка</span></span>
-          <a class="rv-src" href="https://yandex.ru/maps/org/mir_pechati/25478937082/reviews/" target="_blank" rel="noopener">Яндекс <b>4,9</b></a>
-          <a class="rv-src" href="https://2gis.ru/snezhnogorsk/firm/70000001083035959/tab/reviews" target="_blank" rel="noopener">2ГИС <b>5,0</b></a>
+          <a class="rv-src" href="https://yandex.ru/maps/org/mir_pechati/25478937082/reviews/" target="_blank" rel="noopener"><span>Яндекс Карты</span><b>4,9</b><span class="rv-src__cnt">40 оценок</span></a>
+          <a class="rv-src" href="https://2gis.ru/snezhnogorsk/firm/70000001083035959/tab/reviews" target="_blank" rel="noopener"><span>2ГИС</span><b>5,0</b><span class="rv-src__cnt">11 оценок</span></a>
         </div>
 
         <div class="rv-body" hidden>
           <div class="rv-chips" role="group" aria-label="Темы отзывов"></div>
 
-          <div class="rv-viewport">
+          <ul class="rv-track" tabindex="0" aria-label="Отзывы клиентов"></ul>
+        </div>
+
+        <div class="rv-foot">
+          <div class="rv-nav">
             <button class="rv-arrow rv-arrow--prev" type="button" aria-label="Предыдущие отзывы">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
             </button>
-            <ul class="rv-track" tabindex="0" aria-label="Отзывы клиентов"></ul>
+            <div class="rv-dots" aria-label="Страницы отзывов"></div>
             <button class="rv-arrow rv-arrow--next" type="button" aria-label="Следующие отзывы">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
             </button>
           </div>
-        </div>
-
-        <div class="rv-foot">
-          <div class="rv-dots" role="tablist" aria-label="Страницы отзывов"></div>
           <details class="rv-leave">
             <summary class="btn btn--primary">Оставить отзыв</summary>
             <div class="rv-leave__menu">
@@ -577,6 +465,8 @@
           </details>
         </div>
       </div>
+
+      <noscript><p class="lead"><a href="https://yandex.ru/maps/org/mir_pechati/25478937082/reviews/">Все отзывы на Яндекс Картах →</a></p></noscript>
 
       <!-- Единый виджет MyReviews (как у ВауПаспорт). Включается в script.js → MYREVIEWS -->
       <div class="reviews-unified" id="myreviews" hidden></div>
@@ -590,6 +480,7 @@
 
         <div class="panel" role="tabpanel" id="panel-yandex" aria-labelledby="tab-yandex">
           <div class="yandex-frame">
+            <a class="frame-fallback" href="https://yandex.ru/maps/org/mir_pechati/25478937082/reviews/" target="_blank" rel="noopener">Отзывы не&nbsp;загрузились? Откройте их на&nbsp;Яндекс Картах →</a>
             <iframe title="Отзывы о МИР Печати на Яндекс Картах" loading="lazy"
               data-src="https://yandex.ru/maps-reviews-widget/25478937082?comments"></iframe>
           </div>
@@ -619,8 +510,7 @@
   <section class="section" id="faq">
     <div class="wrap faq">
       <header class="faq__head">
-        <p class="eyebrow"><span class="cmyk-tick" aria-hidden="true"></span>Вопросы</p>
-        <h2 class="h2">Как получиться на&nbsp;фото хорошо</h2>
+        <h2 class="h2">Что спрашивают перед съёмкой</h2>
         <p class="lead">Короткие ответы на&nbsp;то, о&nbsp;чём спрашивают чаще всего. Остальное спросите по&nbsp;телефону.</p>
         <a class="btn btn--ghost" href="tel:+79095596960">Задать вопрос</a>
       </header>
@@ -668,7 +558,7 @@
           </details>
           <details>
             <summary>Что входит в 800 ₽?</summary>
-            <p>Съёмка с&nbsp;выбором кадра, ретушь и&nbsp;печать 4&nbsp;фото на&nbsp;паспорт РФ. Электронная версия по&nbsp;запросу. Цены на&nbsp;другие документы и&nbsp;дополнительные комплекты уточняйте у&nbsp;нас.</p>
+            <p>Съёмка с&nbsp;выбором кадра, ретушь и&nbsp;печать 4&nbsp;фото на&nbsp;любой документ: паспорт, загран, визу, 3×4. Электронная версия по&nbsp;запросу. Цену дополнительных комплектов подскажем на&nbsp;месте.</p>
           </details>
           <details>
             <summary>А если фото не примут?</summary>
@@ -691,7 +581,6 @@
   <section class="section section--ink" id="contacts">
     <div class="wrap contacts">
       <div class="contacts__info">
-        <p class="eyebrow eyebrow--light">Как нас найти</p>
         <h2 class="h2">ул. Павла Стеблина,&nbsp;16</h2>
         <p class="contacts__how">Вход со&nbsp;двора. Ищите вывеску «Копировальные услуги».</p>
 
@@ -716,6 +605,7 @@
       </div>
 
       <div class="contacts__map">
+        <a class="frame-fallback frame-fallback--dark" href="https://yandex.ru/maps/org/mir_pechati/25478937082/" target="_blank" rel="noopener">Карта не&nbsp;загрузилась? Откройте «МИР Печати» на&nbsp;Яндекс Картах →</a>
         <iframe title="МИР Печати на карте Снежногорска" loading="lazy"
           src="https://yandex.ru/map-widget/v1/?oid=25478937082&amp;ol=biz&amp;z=16&amp;ll=33.240308%2C69.193081"></iframe>
       </div>
@@ -736,14 +626,20 @@
 </footer>
 
 <!-- Мобильная панель действий -->
-<div class="dock" aria-label="Быстрые действия">
+<nav class="dock" aria-label="Быстрые действия">
   <a href="tel:+79095596960">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>
     Позвонить
   </a>
-  <a class="dock__main" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!" target="_blank" rel="noopener">WhatsApp</a>
-  <a href="https://yandex.ru/maps/?rtext=~69.193081,33.240308&rtt=auto" target="_blank" rel="noopener">Маршрут</a>
-</div>
+  <a class="dock__main" href="https://wa.me/79095596960?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19.1z" class="stroke"/></svg>
+    WhatsApp
+  </a>
+  <a href="https://yandex.ru/maps/?rtext=~69.193081,33.240308&rtt=auto" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" class="stroke"/><circle cx="12" cy="9.5" r="2.5" class="stroke"/></svg>
+    Маршрут
+  </a>
+</nav>
 
 <script src="reviews.js"></script>
 <script src="script.js"></script>
