@@ -337,7 +337,17 @@ html { scrollbar-color: #c4bfb4 transparent; }
   background: var(--m) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 14px no-repeat;
 }
 .checks b { color: var(--y); }
-.price__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+.price__cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; margin-top: 34px; }
+.price__or { font-size: 14px; color: rgb(255 255 255 / .65); }
+.msgs { display: flex; flex-wrap: wrap; gap: 8px; }
+.msgs a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 999px;
+  border: 1.5px solid var(--ink); color: var(--ink); font-weight: 700; font-size: 15px; text-decoration: none;
+  transition: background-color .2s, color .2s, border-color .2s;
+}
+.msgs a:hover { background: var(--ink); color: #fff; }
+.msgs--dark a { border-color: rgb(255 255 255 / .35); color: #fff; }
+.msgs--dark a:hover { background: #fff; color: var(--ink); border-color: #fff; }
 
 /* образцы размеров: CSS-миллиметры ≈ натуральная величина */
 .specimens { padding: clamp(24px, 3vw, 36px) 0 0 clamp(0px, 2vw, 20px); color: #fff; }
@@ -387,18 +397,18 @@ html { scrollbar-color: #c4bfb4 transparent; }
 .ba__caption { margin-top: 16px; font-size: 14px; line-height: 1.5; color: var(--ink-2); text-align: center; }
 /* Точки одного цвета, соединённые линией. Линия «дотягивается» при прокрутке (script.js → scrollScenes);
    без JS и при «уменьшить движение» всё сразу собрано. */
-.ba__list { position: relative; margin-top: 28px; display: grid; gap: 18px; --p: 1; }
+.ba__list { position: relative; margin-top: 32px; display: grid; gap: 22px; --p: 1; }
 .ba__list::before,
 .ba__list::after {
-  content: ""; position: absolute; left: 6px; width: 2px; border-radius: 2px;
+  content: ""; position: absolute; left: 7px; width: 2px; border-radius: 2px;
   top: var(--line-top, 0); height: var(--line-h, 0);
 }
 .ba__list::before { background: color-mix(in srgb, var(--m) 16%, transparent); }
 .ba__list::after { background: var(--m); transform-origin: 50% 0; transform: scaleY(var(--p)); transition: transform .12s linear; }
-.ba__list li { position: relative; padding-left: 34px; color: var(--ink-2); }
+.ba__list li { position: relative; padding-left: 40px; color: var(--ink); font-size: clamp(18px, 1.55vw, 21px); line-height: 1.4; font-weight: 500; }
 .ba__list li::before {
-  content: ""; position: absolute; z-index: 1; left: 0; top: .5em;
-  width: 14px; height: 14px; border-radius: 50%; box-sizing: border-box;
+  content: ""; position: absolute; z-index: 1; left: 0; top: .35em;
+  width: 16px; height: 16px; border-radius: 50%; box-sizing: border-box;
   border: 2px solid var(--m); background: var(--m);
   transition: background-color .3s ease, transform .4s var(--ease-out);
 }
@@ -423,6 +433,8 @@ html { scrollbar-color: #c4bfb4 transparent; }
 }
 .compare__tag b { font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; }
 .compare__tag--after { text-align: right; }
+.compare__tag { transition: opacity .25s ease; }
+.compare.hide-before .compare__tag--before, .compare.hide-after .compare__tag--after { opacity: 0; }
 .compare__tag--before { left: 14px; }
 .compare__tag--after { right: 14px; background: var(--m); color: #fff; }
 .compare__handle {
@@ -487,7 +499,7 @@ html { scrollbar-color: #c4bfb4 transparent; }
 
 /* ---------- Награда Яндекса (в отзывах) ---------- */
 .award-banner {
-  display: grid; grid-template-columns: auto 1fr; gap: clamp(20px, 4vw, 48px); align-items: center;
+  display: grid; grid-template-columns: auto 1fr auto; gap: clamp(20px, 4vw, 48px); align-items: center;
   margin-bottom: 28px; padding: clamp(24px, 4vw, 44px) clamp(24px, 4vw, 52px);
   border-radius: var(--radius); background: var(--ink); color: #fff;
   position: relative; overflow: hidden;
@@ -501,10 +513,20 @@ html { scrollbar-color: #c4bfb4 transparent; }
 .award-banner__emblem span { font: 800 clamp(20px, 2.4vw, 28px)/1 var(--f-display); letter-spacing: -0.02em; color: #fff; }
 .award-banner__title { font: 800 clamp(26px, 3vw, 40px)/1.05 var(--f-display); letter-spacing: -0.03em; margin: 0 0 12px; }
 .award-banner__copy p:last-child { color: rgb(255 255 255 / .72); max-width: 52ch; }
+.award-banner__score {
+  position: relative; display: grid; justify-items: center; gap: 6px; text-align: center; text-decoration: none;
+  padding: 22px 26px; border-radius: var(--radius-sm); background: rgb(255 255 255 / .07);
+  transition: background-color .2s;
+}
+.award-banner__score:hover { background: rgb(255 255 255 / .13); }
+.award-banner__score b { font: 800 52px/1 var(--f-display); letter-spacing: -0.04em; }
+.award-banner__score .stars { color: var(--y); font-size: 18px; letter-spacing: 2px; }
+.award-banner__score span:last-child { font-size: 14px; color: rgb(255 255 255 / .72); }
 /* ---------- И не только про документы: прайс-чек ---------- */
 .services { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(32px, 6vw, 88px); align-items: start; }
 .services__head { position: sticky; top: calc(var(--header-h) + 40px); }
-.services__head .lead { margin: 20px 0 28px; }
+.services__head .lead { margin: 20px 0 24px; }
+.services__ask { font-weight: 700; margin-bottom: 10px; }
 .receipt {
   position: relative; background: #fff; color: var(--ink);
   padding: clamp(24px, 3vw, 36px) clamp(20px, 3vw, 36px) 30px;
@@ -663,18 +685,15 @@ html { scrollbar-color: #c4bfb4 transparent; }
 .rv-dot { width: 32px; height: 32px; padding: 0; border: 0; cursor: pointer; background: none; display: grid; place-items: center; }
 .rv-dot::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #c4bfb4; transition: background-color .2s, transform .2s; }
 .rv-dot[aria-current="true"]::before { background: var(--ink); transform: scale(1.25); }
-.rv-leave { position: relative; }
-.rv-leave summary { list-style: none; }
-.rv-leave summary::-webkit-details-marker { display: none; }
-.rv-leave summary::after { display: none; }
-.rv-leave__menu {
-  position: absolute; right: 0; bottom: calc(100% + 10px); z-index: 5;
-  display: grid; min-width: 220px; padding: 8px; border-radius: 16px;
-  background: #fff; box-shadow: 0 1px 2px rgb(17 18 22 / .1), 0 16px 32px -14px rgb(17 18 22 / .35);
+.rv-leave { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.rv-leave__label { font-weight: 800; }
+.rv-leave__btns { display: inline-flex; border-radius: 999px; overflow: hidden; background: var(--m); }
+.rv-leave__btns a {
+  display: inline-flex; align-items: center; min-height: 52px; padding: 0 22px;
+  color: #fff; font-weight: 700; text-decoration: none; transition: background-color .2s;
 }
-.rv-leave__menu a { padding: 12px 14px; border-radius: 10px; font-weight: 700; text-decoration: none; }
-.rv-leave__menu a:hover { background: var(--paper-2); }
-.rv-leave[open] summary { --bg: var(--m-dark); }
+.rv-leave__btns a + a { box-shadow: inset 1.5px 0 0 rgb(255 255 255 / .45); }
+.rv-leave__btns a:hover { background: var(--m-dark); }
 
 /* На десктопе: Яндекс и 2ГИС рядом, без вкладок */
 @media (min-width: 901px) {
@@ -943,6 +962,7 @@ details p:last-child { padding-bottom: 24px; }
   .guarantee { grid-template-columns: auto 1fr; }
   .guarantee .btn { grid-column: 1 / -1; justify-self: start; }
   .award-banner { grid-template-columns: auto 1fr; }
+  .award-banner__score { grid-column: 1 / -1; grid-template-columns: auto auto 1fr; justify-items: start; align-items: center; gap: 14px; text-align: left; }
 }
 
 @media (max-width: 640px) {
@@ -976,13 +996,14 @@ details p:last-child { padding-bottom: 24px; }
   .rv-track { --gap: 12px; grid-auto-columns: 86%; }
   .rv-summary { gap: 10px 20px; }
   .rv-foot { flex-direction: column; gap: 16px; }
-  .rv-leave__menu { left: 50%; right: auto; transform: translateX(-50%); }
   .rv-card { padding: 20px; min-height: 260px; }
   .specimens__row { gap: 28px 30px; margin-left: 20px; }
   .spec-list > div { grid-template-columns: 1fr; gap: 4px; }
   .receipt__group li { gap: 12px; }
 
   .price__cta .btn, .gis-card__cta .btn, .contacts__routes .btn { flex: 1 1 100%; }
+  .msgs a { flex: 1 1 auto; justify-content: center; padding: 0 12px; }
+  .rv-leave { flex-direction: column; gap: 10px; }
   .section__head--split { align-items: flex-start; }
   .rv-summary { gap: 10px; }
   .rv-src { flex: 1 1 100%; justify-content: flex-start; }
@@ -1012,6 +1033,4 @@ details p:last-child { padding-bottom: 24px; }
   }
 }
 
-.rv-leave { border: 0; }
-.rv-leave summary:hover { color: #fff; }
 .reviews[hidden], .rv[hidden], .rv [hidden] { display: none !important; }

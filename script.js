@@ -339,6 +339,9 @@ document.querySelectorAll('.compare').forEach((box) => {
   const setPos = (v) => {
     const pos = Math.max(0, Math.min(100, v));
     box.style.setProperty('--pos', `${pos}%`);
+    // подпись прячется, когда на неё наезжает разделитель
+    box.classList.toggle('hide-before', pos < 44);
+    box.classList.toggle('hide-after', pos > 70);
     if (range) range.value = String(Math.round(pos));
   };
   const touch = () => { touched = true; box.classList.add('is-touched'); };
@@ -537,7 +540,7 @@ document.querySelectorAll('.compare').forEach((box) => {
 })();
 
 /* ---------- Меню «Оставить отзыв»: закрывать по клику мимо и Esc ---------- */
-document.querySelectorAll('.rv-leave').forEach((d) => {
+document.querySelectorAll('details.rv-leave').forEach((d) => {
   document.addEventListener('click', (e) => { if (d.open && !d.contains(e.target)) d.open = false; });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') d.open = false; });
 });
